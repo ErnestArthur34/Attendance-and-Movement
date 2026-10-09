@@ -40,8 +40,8 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
 </style></head><body>
-<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.4</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
-<div id="cam" class="modal hide"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;border-radius:14px;background:#000;transform:scaleX(-1)"></video><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
+<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.5</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
+<div id="cam" class="modal hide"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;border-radius:14px;background:#000;transform:scaleX(-1)"></video><button id="cf" class="alt hide" style="max-width:360px">Switch camera (front / back)</button><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
 <div id="pv" class="modal hide"><div id="pvm"></div><img id="pvi" alt="Selfie" style="max-width:100%;max-height:65vh;border-radius:12px"><button id="pvc" style="max-width:360px">Close</button></div>
 <div id="rmod" class="modal hide" style="justify-content:flex-start;overflow:auto"><div id="rmb" style="width:100%;max-width:520px;text-align:left"></div><button id="rmc" style="max-width:360px">Close</button></div>
 <main>
@@ -175,9 +175,12 @@ const why=e=>e&&e.code==='permission-denied'?'The database rules refused it. Ask
 const SF={timeZone:'Africa/Accra',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true};
 function selfie(lab,fc,W0){fc=fc||'user';return new Promise(async(res,rej)=>{
  const m=$('cam'),v=$('vid');let stream;
- const done=(f,x)=>{try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}v.srcObject=null;m.classList.add('hide');f(x)};
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:fc,width:{ideal:W0?1280:640},height:{ideal:W0?720:480}},audio:false})}catch(e){return rej(new Error('camera'))}
- v.srcObject=stream;v.style.transform=fc==='user'?'scaleX(-1)':'none';m.classList.remove('hide');try{await v.play()}catch(e){}
+ const stop=()=>{try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}};
+ const done=(f,x)=>{stop();v.srcObject=null;m.classList.add('hide');f(x)};
+ const start=async()=>{stop();stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:fc,width:{ideal:W0?1280:640},height:{ideal:W0?720:480}},audio:false});v.srcObject=stream;v.style.transform=fc==='user'?'scaleX(-1)':'none';try{await v.play()}catch(e){}};
+ try{await start()}catch(e){return rej(new Error('camera'))}
+ m.classList.remove('hide');$('cf').classList.toggle('hide',!W0);
+ $('cf').onclick=async()=>{const was=fc;fc=fc==='user'?'environment':'user';try{await start()}catch(e){fc=was;try{await start()}catch(x){}}};
  $('cc').onclick=()=>done(rej,new Error('cancel'));
  $('cs').onclick=()=>{if(!v.videoWidth)return;const W=W0||280,H=Math.round(W*v.videoHeight/v.videoWidth),B=Math.round(W*30/280),c=document.createElement('canvas');c.width=W;c.height=H+B;const x=c.getContext('2d');x.drawImage(v,0,0,W,H);x.fillStyle='#000';x.fillRect(0,H,W,B);x.fillStyle='#fff';x.font=Math.round(W*10/280)+'px sans-serif';const l=lab();x.fillText(l[0],4,H+Math.round(B*.42));x.fillText(l[1],4,H+Math.round(B*.88));done(res,c.toDataURL('image/jpeg',.6))}})}
 async function mark(type){
@@ -219,7 +222,7 @@ async function today(){const d=day(now()),from=day(new Date(now()-histDays*864e5
  homeStat();$('more').textContent='Show earlier days (now showing the last '+histDays+' days)'}
 $('more').onclick=()=>{histDays+=30;today()};
 let last=[],lastM=[],csvD={head:[],rows:[]};
-const ph=r=>r&&r.id?`<a href="#" class="ph" data-p="${r.id}" aria-label="View selfie">📷</a>`:'';
+const ph=r=>r&&(r.photoId||r.id)?`<a href="#" class="ph" data-p="${r.photoId||r.id}" aria-label="View photo">📷</a>`:'';
 const sec=r=>r&&r.at?r.at.seconds:0;
 const tm=r=>r&&r.at?r.at.toDate().toLocaleTimeString('en-GB',{timeZone:'Africa/Accra',hour:'2-digit',minute:'2-digit',hour12:true}):'–';
 const hrs=m=>m==null?'–':Math.floor(m/60)+'h '+String(Math.round(m%60)).padStart(2,'0')+'m';
@@ -287,8 +290,8 @@ async function admin(){
  $('stab').querySelectorAll('[data-r]').forEach(x=>x.onchange=()=>db.collection('users').doc(x.dataset.r).update({role:x.value}).then(()=>admin()));
  $('stab').querySelectorAll('[data-l]').forEach(x=>x.onchange=()=>db.collection('users').doc(x.dataset.l).update({locations:[...x.selectedOptions].map(o=>o.value)}))}
 document.addEventListener('click',async e=>{const a=e.target.closest&&e.target.closest('[data-p]');if(!a)return;e.preventDefault();
- $('pvi').removeAttribute('src');$('pvm').textContent='Loading…';$('pv').classList.remove('hide');
- try{const d=await db.collection('photos').doc(a.dataset.p).get();if(d.exists){$('pvi').src=d.data().data;$('pvm').textContent=''}else $('pvm').textContent='No selfie was saved for this record.'}catch(x){$('pvm').textContent='Could not load the selfie.'}});
+ $('pvi').removeAttribute('src');$('pvi').hidden=true;$('pvm').textContent='Loading…';$('pv').classList.remove('hide');
+ try{const d=await db.collection('photos').doc(a.dataset.p).get();if(d.exists){$('pvi').src=d.data().data;$('pvi').hidden=false;$('pvm').textContent=''}else $('pvm').textContent='No photo was saved for this record.'}catch(x){$('pvm').textContent='Could not load the selfie.'}});
 $('pvc').onclick=()=>$('pv').classList.add('hide');
 setInterval(async()=>{if(!me)return;try{await loadLocs();const u=await db.collection('users').doc(me.uid).get();if(u.exists){me.locations=u.data().locations||[];me.role=u.data().role||me.role;me.supervisorId=u.data().supervisorId||null;me.superId=u.data().superId||null}if(pos)check()}catch(e){}},60000);
 /* ---------- field movement + home ---------- */

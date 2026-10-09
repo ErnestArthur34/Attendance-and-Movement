@@ -40,7 +40,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
 </style></head><body>
-<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.2</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
+<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.1</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
 <div id="cam" class="modal hide"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;border-radius:14px;background:#000;transform:scaleX(-1)"></video><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
 <div id="pv" class="modal hide"><div id="pvm"></div><img id="pvi" alt="Selfie" style="max-width:100%;max-height:65vh;border-radius:12px"><button id="pvc" style="max-width:360px">Close</button></div>
 <div id="rmod" class="modal hide" style="justify-content:flex-start;overflow:auto"><div id="rmb" style="width:100%;max-width:520px;text-align:left"></div><button id="rmc" style="max-width:360px">Close</button></div>
@@ -106,7 +106,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-firebase.initializeApp({apiKey:"AIzaSyCOR5NOTFbczdIjgm6haVK-LAcH6Zl4FcM",authDomain:"attendance-and-movement-app.firebaseapp.com",projectId:"attendance-and-movement-app",storageBucket:"attendance-and-movement-app.firebasestorage.app",messagingSenderId:"30657337828",appId:"1:30657337828:web:70a0525d52419b10590ff1"});
+firebase.initializeApp({apiKey:"AIzaSyBEmsqpXTTlc-WfYjYrEnD0NxCNFyMWtCo",authDomain:"attendance-bb993.firebaseapp.com",projectId:"attendance-bb993",storageBucket:"attendance-bb993.firebasestorage.app",messagingSenderId:"17576441287",appId:"1:17576441287:web:9100d5286f0ac0daf2d5e2"});
 const auth=firebase.auth(),db=firebase.firestore();try{db.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
 const TS=firebase.firestore.FieldValue.serverTimestamp;
 const $=i=>document.getElementById(i),MAXACC=60;
@@ -171,7 +171,6 @@ function check(){
  near?ui('in',r.l.name,`${Math.round(r.d)} m from centre`,true):ui('out','Outside',`${Math.round(r.d)} m from ${r.l.name} (limit ${r.l.radius} m)`)}
 function ui(c,a,b,ok){$('ring').className='ring '+c;$('rs').textContent=a;$('rd').textContent=b;geoOk=!!ok;setBtns()}
 function setBtns(){$('bin').disabled=!(geoOk&&!st.in);$('bout').disabled=!(geoOk&&st.in&&!st.out)}
-const why=e=>e&&e.code==='permission-denied'?'The database rules refused it. Ask the admin to publish the latest rules.':e&&e.code==='unavailable'?'There is no connection.':'Error: '+((e&&(e.code||e.message))||'unknown');
 const SF={timeZone:'Africa/Accra',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true};
 function selfie(lab,fc,W0){fc=fc||'user';return new Promise(async(res,rej)=>{
  const m=$('cam'),v=$('vid');let stream;
@@ -189,7 +188,7 @@ async function mark(type){
  try{const id=me.uid+'_'+day(now())+'_'+type,b=db.batch();
   b.set(db.collection('photos').doc(id),{uid:me.uid,data:photo,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});
   b.set(db.collection('attendance').doc(id),{uid:me.uid,name:me.name,position:me.position,type,locationId:near.id,locationName:near.name,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),date:day(now()),deviceId:DEV,photoId:id,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
-  await b.commit();today()}catch(e){say('mm','Could not save. '+why(e)+' (If you already signed '+type+' today, this is expected.)','bad');today()}}
+  await b.commit();today()}catch(e){say('mm','Could not save. You may have already signed '+type+' today, or there is no connection.','bad');today()}}
 $('bin').onclick=()=>mark('in');$('bout').onclick=()=>mark('out');
 
 /* ---------- records ---------- */
@@ -299,7 +298,7 @@ $('fsave').onclick=async()=>{if(!pos)return;$('fsave').disabled=true;
  if(fphoto){b.set(db.collection('photos').doc(id),{uid:me.uid,data:fphoto,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});rec.photoId=id}
  b.set(db.collection('movements').doc(id),rec);
  try{await Promise.race([b.commit(),new Promise((_,r)=>setTimeout(()=>r(new Error('slow')),9000))]);say('fm','Record saved.','good')}
- catch(e){if(e.message!=='slow'){say('fm','Could not save the record. '+why(e),'bad');fshow();return}say('fm','Saved on this phone. It will upload when you are back online.','good')}
+ catch(e){if(e.message!=='slow'){say('fm','Could not save the record. Try again.','bad');fshow();return}say('fm','Saved on this phone. It will upload when you are back online.','good')}
  flast={...rec,local:t.toLocaleString('en-GB',SF),photo:fphoto};$('sendCard').classList.remove('hide');
  $('fnote').value='';fphoto=null;$('fprev').hidden=true;fshow();fcount()};
 const fmsg=r=>'Field record from '+r.name+NL+'Date and time: '+r.local+NL+'Location: '+r.lat.toFixed(6)+', '+r.lng.toFixed(6)+' (about '+r.accuracy+' m)'+NL+'Map: https://maps.google.com/?q='+r.lat+','+r.lng+(r.note?NL+'Note: '+r.note:'');

@@ -40,7 +40,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
 </style></head><body>
-<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.2</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
+<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.3</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
 <div id="cam" class="modal hide"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;border-radius:14px;background:#000;transform:scaleX(-1)"></video><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
 <div id="pv" class="modal hide"><div id="pvm"></div><img id="pvi" alt="Selfie" style="max-width:100%;max-height:65vh;border-radius:12px"><button id="pvc" style="max-width:360px">Close</button></div>
 <div id="rmod" class="modal hide" style="justify-content:flex-start;overflow:auto"><div id="rmb" style="width:100%;max-width:520px;text-align:left"></div><button id="rmc" style="max-width:360px">Close</button></div>
@@ -56,7 +56,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 <!-- APP -->
 <div id="app" class="hide">
  <div class="tabs"><button data-t="home" class="on">Home</button><button data-t="me">Attendance</button><button data-t="fld">Field</button><button data-t="rec">Records</button><button data-t="rep" class="rep hide">Reports</button><button data-t="adm" class="adm hide">Admin</button></div>
- <section id="t-home"><div class="card"><h2 id="hi">Welcome</h2><div class="tiles">
+ <section id="t-home"><div class="card"><h2 id="hi">Welcome</h2><div id="who" style="font-size:12px;color:var(--mut);margin:-4px 0 10px"></div><div class="tiles">
   <button class="tile" data-go="me"><b>Attendance</b><span id="ts1">Sign in and out</span></button>
   <button class="tile" data-go="fld"><b>Field record</b><span id="ts2">Record where you are</span></button>
   <button class="tile" data-go="rec"><b>Records</b><span>Summary, search, selfies</span></button>
@@ -144,7 +144,7 @@ auth.onAuthStateChanged(async u=>{
  document.querySelectorAll('.adm').forEach(e=>e.classList.toggle('hide',me.role!=='admin'));
  document.querySelectorAll('.rep').forEach(e=>e.classList.toggle('hide',!['supervisor','super','admin'].includes(me.role)));$('sendrep').classList.toggle('hide',me.role!=='supervisor');
  const canExp=['admin','supervisor','super'].includes(me.role);$('rx').classList.toggle('hide',!canExp);$('rl').parentElement.style.gridTemplateColumns=canExp?'1fr 1fr':'1fr';
- await loadLocs();watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');
+ await loadLocs();watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(s.exists?'Role: '+(me.role||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v3.3';
 });
 
 /* ---------- tabs ---------- */
@@ -186,10 +186,11 @@ async function mark(type){
  let photo;
  try{photo=await selfie(()=>[now().toLocaleString('en-GB',SF),me.name+' | '+type.toUpperCase()+' | '+near.name])}
  catch(e){setBtns();return say('mm',e.message==='cancel'?'Selfie cancelled. Nothing was saved.':'The camera is needed for the selfie. Allow camera access for this app and try again.','bad')}
- try{const id=me.uid+'_'+day(now())+'_'+type,b=db.batch();
-  b.set(db.collection('photos').doc(id),{uid:me.uid,data:photo,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});
-  b.set(db.collection('attendance').doc(id),{uid:me.uid,name:me.name,position:me.position,type,locationId:near.id,locationName:near.name,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),date:day(now()),deviceId:DEV,photoId:id,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
-  await b.commit();today()}catch(e){say('mm','Could not save. '+why(e)+' (If you already signed '+type+' today, this is expected.)','bad');today()}}
+ const t=now(),id=me.uid+'_'+day(t)+'_'+type,pid=id+'_'+Date.now();let step='selfie photo';
+ try{await db.collection('photos').doc(pid).set({uid:me.uid,data:photo,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});
+  step='attendance record';
+  await db.collection('attendance').doc(id).set({uid:me.uid,name:me.name,position:me.position,type,locationId:near.id,locationName:near.name,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,photoId:pid,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
+  today()}catch(e){say('mm','Could not save the '+step+'. '+why(e)+(e&&e.code==='permission-denied'?' (If you already signed '+type+' today, this is expected.)':''),'bad');today()}}
 $('bin').onclick=()=>mark('in');$('bout').onclick=()=>mark('out');
 
 /* ---------- records ---------- */
@@ -295,11 +296,12 @@ $('fup').onchange=function(){const f=this.files[0];if(!f)return;const im=new Ima
  im.onload=()=>{const k=Math.min(1,800/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);fset(c.toDataURL('image/jpeg',.6));URL.revokeObjectURL(u)};
  im.onerror=()=>say('ferr','Could not load that photo.','bad');im.src=u};
 $('fsave').onclick=async()=>{if(!pos)return;$('fsave').disabled=true;
- const id=me.uid+'_m'+Date.now(),t=now(),rec={uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),note:$('fnote').value.trim().slice(0,400),date:day(t),deviceId:DEV,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()},b=db.batch();
- if(fphoto){b.set(db.collection('photos').doc(id),{uid:me.uid,data:fphoto,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});rec.photoId=id}
- b.set(db.collection('movements').doc(id),rec);
- try{await Promise.race([b.commit(),new Promise((_,r)=>setTimeout(()=>r(new Error('slow')),9000))]);say('fm','Record saved.','good')}
- catch(e){if(e.message!=='slow'){say('fm','Could not save the record. '+why(e),'bad');fshow();return}say('fm','Saved on this phone. It will upload when you are back online.','good')}
+ const id=me.uid+'_m'+Date.now(),t=now(),rec={uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),note:$('fnote').value.trim().slice(0,400),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()};
+ const w=(n,pr)=>pr.catch(e=>{e.step=n;throw e});let p1=Promise.resolve();
+ if(fphoto){p1=w('photo',db.collection('photos').doc(id).set({uid:me.uid,data:fphoto,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()}));rec.photoId=id}
+ const p2=w('field record',db.collection('movements').doc(id).set(rec));
+ try{await Promise.race([Promise.all([p1,p2]),new Promise((_,r)=>setTimeout(()=>r(new Error('slow')),9000))]);say('fm','Record saved.','good')}
+ catch(e){if(e.message!=='slow'){say('fm','Could not save the '+(e.step||'record')+'. '+why(e),'bad');fshow();return}say('fm','Saved on this phone. It will upload when you are back online.','good')}
  flast={...rec,local:t.toLocaleString('en-GB',SF),photo:fphoto};$('sendCard').classList.remove('hide');
  $('fnote').value='';fphoto=null;$('fprev').hidden=true;fshow();fcount()};
 const fmsg=r=>'Field record from '+r.name+NL+'Date and time: '+r.local+NL+'Location: '+r.lat.toFixed(6)+', '+r.lng.toFixed(6)+' (about '+r.accuracy+' m)'+NL+'Map: https://maps.google.com/?q='+r.lat+','+r.lng+(r.note?NL+'Note: '+r.note:'');

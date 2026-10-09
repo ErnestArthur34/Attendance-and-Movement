@@ -40,7 +40,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
 </style></head><body>
-<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.3</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
+<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.4</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
 <div id="cam" class="modal hide"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;border-radius:14px;background:#000;transform:scaleX(-1)"></video><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
 <div id="pv" class="modal hide"><div id="pvm"></div><img id="pvi" alt="Selfie" style="max-width:100%;max-height:65vh;border-radius:12px"><button id="pvc" style="max-width:360px">Close</button></div>
 <div id="rmod" class="modal hide" style="justify-content:flex-start;overflow:auto"><div id="rmb" style="width:100%;max-width:520px;text-align:left"></div><button id="rmc" style="max-width:360px">Close</button></div>
@@ -190,7 +190,7 @@ async function mark(type){
  try{await db.collection('photos').doc(pid).set({uid:me.uid,data:photo,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});
   step='attendance record';
   await db.collection('attendance').doc(id).set({uid:me.uid,name:me.name,position:me.position,type,locationId:near.id,locationName:near.name,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,photoId:pid,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
-  today()}catch(e){say('mm','Could not save the '+step+'. '+why(e)+(e&&e.code==='permission-denied'?' (If you already signed '+type+' today, this is expected.)':''),'bad');today()}}
+  st[type]=true;saveSt();setBtns();today()}catch(e){say('mm','Could not save the '+step+'. '+why(e)+(e&&e.code==='permission-denied'?' (If you already signed '+type+' today, this is expected.)':''),'bad');today()}}
 $('bin').onclick=()=>mark('in');$('bout').onclick=()=>mark('out');
 
 /* ---------- records ---------- */
@@ -202,9 +202,16 @@ async function q(from,to,mine,col){
   if(!mine&&me.role==='super')qs.push(c.where('supervisorId','==',me.uid),c.where('superId','==',me.uid));
   const seen={};(await Promise.all(qs.map(x=>x.get()))).forEach(r=>r.docs.forEach(d=>{seen[d.id]=d}));docs=Object.values(seen)}
  return docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.date>=from&&x.date<=to).sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0))}
+let histDays=30;
 const qm=(f,t,m)=>q(f,t,m,'movements');
-async function today(){const d=day(now()),from=day(new Date(now()-histDays*864e5)),all=await q(from,d,true),rows=all.filter(r=>r.date===d);
- st={in:rows.some(r=>r.type==='in'),out:rows.some(r=>r.type==='out')};setBtns();
+const saveSt=()=>{try{localStorage.setItem('atds_st',JSON.stringify({u:me.uid,d:day(now()),in:st.in,out:st.out}))}catch(e){}};
+async function today(){const d=day(now()),from=day(new Date(now()-histDays*864e5));let all=[],ok=true,why1='';
+ try{all=await q(from,d,true)}catch(e){ok=false;why1=why(e)}
+ const rows=all.filter(r=>r.date===d);
+ if(ok){st={in:rows.some(r=>r.type==='in'),out:rows.some(r=>r.type==='out')};saveSt()}
+ else{let l={};try{l=JSON.parse(localStorage.getItem('atds_st')||'{}')}catch(e){}st=(l.u===me.uid&&l.d===d)?{in:!!l.in,out:!!l.out}:{in:false,out:false}}
+ setBtns();
+ if(!ok){say('mm',st.out?'You have signed in and out today.':st.in?'You are signed in. Sign out when you leave.':'','good');$('today').innerHTML='<tr><td>Could not load your attendance history. '+esc(why1)+'</td></tr>';homeStat();return}
  const ri=rows.find(r=>r.type==='in'),ro=rows.find(r=>r.type==='out');
  if(st.out)say('mm','Signed in at '+tms(ri)+', signed out at '+tms(ro)+' (server time). Done for today.','good');else if(st.in)say('mm','Signed in at '+tms(ri)+' (server time). Sign out when you leave.','good');
  const sm=summarise(all,'08:00');
@@ -226,7 +233,7 @@ function summarise(rows,late){
   const ins=a.filter(x=>x.type==='in'),outs=a.filter(x=>x.type==='out'),fi=ins[0],lo=outs[outs.length-1];
   const mins=fi&&lo&&sec(lo)>sec(fi)?(sec(lo)-sec(fi))/60:null;
   let st='No sign-in';
-  if(fi){st=(acc(fi.at.toDate())>lh*60+lm?'Late':'On time')+(lo?'':' (still in)')}
+  if(fi&&fi.at){st=(acc(fi.at.toDate())>lh*60+lm?'Late':'On time')+(lo?'':' (still in)')}
   return{uid:a[0].uid,date:a[0].date,name:a[0].name,position:a[0].position,fi,lo,mins,st,loc:(fi||a[0]).locationName}})
  .sort((x,y)=>y.date.localeCompare(x.date)||String(x.name).localeCompare(String(y.name)))}
 function counts(r){const g={};r.forEach(x=>{const o=g[x.uid]=g[x.uid]||{uid:x.uid,name:x.name,position:x.position,d:0,l:0,m:0};if(x.fi)o.d++;if(x.st.startsWith('Late'))o.l++;o.m+=x.mins||0});return Object.values(g).sort((a,b)=>String(a.name).localeCompare(String(b.name)))}

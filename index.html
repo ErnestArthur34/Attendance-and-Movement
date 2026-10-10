@@ -40,7 +40,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 .modal{overflow:auto;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
 </style></head><body>
-<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.6</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
+<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.7</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
 <div id="cam" class="modal hide" style="justify-content:flex-start;overflow:auto;padding-top:calc(16px + env(safe-area-inset-top,0px))"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;max-height:52vh;object-fit:contain;border-radius:14px;background:#000;transform:scaleX(-1)"></video><button id="cf" class="alt hide" style="max-width:360px">Switch camera (front / back)</button><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
 <div id="pv" class="modal hide"><div id="pvm"></div><img id="pvi" alt="Selfie" style="max-width:100%;max-height:65vh;border-radius:12px"><button id="pvc" style="max-width:360px">Close</button></div>
 <div id="rmod" class="modal hide" style="justify-content:flex-start;overflow:auto"><div id="rmb" style="width:100%;max-width:520px;text-align:left"></div><button id="rmc" style="max-width:360px">Close</button></div>
@@ -55,11 +55,12 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 </section>
 <!-- APP -->
 <div id="app" class="hide">
- <div class="tabs"><button data-t="home" class="on">Home</button><button data-t="me">Attendance</button><button data-t="fld">Field</button><button data-t="rec">Records</button><button data-t="rep" class="rep hide">Reports</button><button data-t="adm" class="adm hide">Admin</button></div>
+ <div class="tabs"><button data-t="home" class="on">Home</button><button data-t="me">Attendance</button><button data-t="fld">Field</button><button data-t="rec">Records</button><button data-t="live" class="rep hide">Live</button><button data-t="rep" class="rep hide">Reports</button><button data-t="adm" class="adm hide">Admin</button></div>
  <section id="t-home"><div class="card"><h2 id="hi">Welcome</h2><div id="who" style="font-size:12px;color:var(--mut);margin:-4px 0 10px"></div><div class="tiles">
   <button class="tile" data-go="me"><b>Attendance</b><span id="ts1">Sign in and out</span></button>
   <button class="tile" data-go="fld"><b>Field record</b><span id="ts2">Record where you are</span></button>
   <button class="tile" data-go="rec"><b>Records</b><span>Summary, search, selfies</span></button>
+  <button class="tile rep hide" data-go="live"><b>Live tracking</b><span>Where your staff are now</span></button>
   <button class="tile rep hide" data-go="rep"><b>Reports</b><span>Sent to and from supervisors</span></button>
   <button class="tile adm hide" data-go="adm"><b>Admin</b><span>Locations, staff, roles</span></button></div></div></section>
  <section id="t-fld" class="hide">
@@ -69,6 +70,7 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
    <div class="row" style="margin-top:10px"><button id="fcam" class="alt">Take photo</button><label class="fbtn">Upload image<input id="fup" type="file" accept="image/*" hidden></label></div>
    <img id="fprev" class="fp" alt="Photo preview" hidden><div id="ferr"></div>
    <button id="fsave" disabled>Save record</button><div id="fm"></div></div>
+  <div class="card"><h2>Live location</h2><p style="color:var(--mut);font-size:12px;margin:0 0 10px">Your supervisor can see where you are, live, while this is on. Keep the app open. Tap Stop sharing to end it.</p><button id="lbtn" class="alt">Share my live location with my supervisor</button><div id="lst" style="margin-top:8px;font-size:13px"></div></div>
   <div class="card hide" id="sendCard"><h2>Notify supervisor</h2><div class="row"><button id="wa">WhatsApp</button><button id="sms" class="alt">SMS</button><button id="mail" class="alt">Email</button><button id="share" class="alt">Share with photo</button></div>
    <p style="color:var(--mut);font-size:12px">Your phone opens the app with the message ready. Press send there.</p></div>
   <details class="card" id="setup" open><summary>Supervisor details</summary>
@@ -91,6 +93,8 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
   <button id="sendrep" class="alt hide">Send report to my Super Supervisor</button>
   <div class="tbl" style="margin-top:10px"><table id="rtab"></table></div>
   <h2 style="margin-top:18px">Count per staff</h2><div class="tbl"><table id="ctab"></table></div></div></section>
+ <section id="t-live" class="hide"><div class="card"><h2>Live locations</h2><div id="livenote" style="color:var(--mut);font-size:12px;margin-bottom:8px">Staff who are sharing their location with you appear here and update by themselves.</div><div class="tbl"><table id="livetab"></table></div></div>
+  <div class="card hide" id="mapcard"><h2 id="maph">Map</h2><iframe id="mapf" title="Map" style="width:100%;height:300px;border:0;border-radius:10px" loading="lazy"></iframe><p><a id="mapg" href="#" target="_blank" rel="noopener">Open in Google Maps</a></p></div></section>
  <section id="t-rep" class="hide"><div class="card"><h2 id="reph">Reports</h2><div class="tbl"><table id="reptab"></table></div></div></section>
  <section id="t-adm" class="hide">
   <div class="card"><h2>Allowed locations</h2>
@@ -133,7 +137,7 @@ $('go').onclick=async()=>{
    await db.collection('users').doc(c.user.uid).set({name:$('rn').value.trim(),position:$('rp').value.trim(),username:u.trim().toLowerCase(),role:'staff',locations:[],active:true,deviceId:DEV,created:TS()});
   }else await auth.signInWithEmailAndPassword(em,pp);
  }catch(e){say('am',e.code==='auth/email-already-in-use'?'That username is taken.':'Could not log in. Check your username and password.','bad')}};
-$('lo').onclick=()=>auth.signOut();
+$('lo').onclick=async()=>{if(shareOn)await stopShare();stopLive();auth.signOut()};
 auth.onAuthStateChanged(async u=>{
  if(!u){me=null;$('auth').classList.remove('hide');$('app').classList.add('hide');$('lo').classList.add('hide');return}
  let s;for(let i=0;i<8;i++){s=await db.collection('users').doc(u.uid).get();if(s.exists)break;await new Promise(r=>setTimeout(r,500))}
@@ -150,8 +154,8 @@ auth.onAuthStateChanged(async u=>{
 /* ---------- tabs ---------- */
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
- ['home','me','fld','rec','rep','adm'].forEach(t=>$('t-'+t).classList.toggle('hide',t!==b.dataset.t));
- if(b.dataset.t==='adm')admin();if(b.dataset.t==='rep')loadReports();if(b.dataset.t==='rec'&&!$('rtab').dataset.ran)$('rl').onclick()});
+ ['home','me','fld','rec','live','rep','adm'].forEach(t=>$('t-'+t).classList.toggle('hide',t!==b.dataset.t));
+ if(b.dataset.t==='adm')admin();if(b.dataset.t==='rep')loadReports();if(b.dataset.t==='live')startLive();else stopLive();if(b.dataset.t==='rec'&&!$('rtab').dataset.ran)$('rl').onclick()});
 
 /* ---------- clock ---------- */
 setInterval(()=>{const n=now();$('clk').textContent=n.toLocaleTimeString('en-GB',{timeZone:'Africa/Accra',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});$('dt').textContent=n.toLocaleDateString('en-GB',{timeZone:'Africa/Accra',weekday:'long',day:'numeric',month:'long',year:'numeric'})},500);
@@ -162,7 +166,7 @@ async function loadLocs(){const s=await db.collection('locations').where('active
 function allowed(){const a=locs.filter(l=>(me.locations||[]).includes(l.id));return a.length?a:locs} // none assigned = any active location
 function watch(){
  if(!navigator.geolocation)return say('mm','This device cannot share its location.','bad');
- navigator.geolocation.watchPosition(p=>{pos=p.coords;check();fshow()},e=>{pos=null;near=null;ui('out','Location off','Allow location access for this app.');},{enableHighAccuracy:true,maximumAge:5000,timeout:20000})}
+ navigator.geolocation.watchPosition(p=>{pos=p.coords;check();fshow();pushLive()},e=>{pos=null;near=null;ui('out','Location off','Allow location access for this app.');},{enableHighAccuracy:true,maximumAge:5000,timeout:20000})}
 function check(){
  const al=allowed();if(!al.length)return ui('out','No work location','An admin has not added a work location yet.');
  if(pos.accuracy>MAXACC)return ui('out','Weak GPS',`Accuracy ±${Math.round(pos.accuracy)} m. Move to open sky.`);
@@ -352,5 +356,36 @@ function openReport(r){
  $('rmod').classList.remove('hide');
  if(me.uid===r.toUid&&!r.read){db.collection('reports').doc(r.id).update({read:true}).then(()=>{r.read=true;loadReports()}).catch(()=>{})}}
 $('rmc').onclick=()=>$('rmod').classList.add('hide');
+/* ---------- live location: staff shares, supervisor watches ---------- */
+let shareOn=false,lastShare=0,lastSent=null,wl=null,liveUn=[],liveRows={};
+async function pushLive(force){
+ if(!shareOn||!pos)return;const n=Date.now(),moved=lastSent?dist(lastSent.a,lastSent.b,pos.latitude,pos.longitude):999;
+ if(!force&&(n-lastShare<30000||(moved<15&&n-lastShare<120000)))return;lastShare=n;
+ try{await db.collection('live').doc(me.uid).set({uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
+  lastSent={a:pos.latitude,b:pos.longitude};$('lst').textContent='Sharing live. Last sent '+now().toLocaleTimeString('en-GB',{timeZone:'Africa/Accra',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})}
+ catch(e){$('lst').textContent='Could not send your location. '+why(e)}}
+function setShareUI(){$('lbtn').textContent=shareOn?'Stop sharing':'Share my live location with my supervisor';$('lbtn').className=shareOn?'':'alt';if(!shareOn)$('lst').textContent=''}
+async function stopShare(){shareOn=false;lastSent=null;try{wl&&wl.release()}catch(e){}wl=null;try{await db.collection('live').doc(me.uid).delete()}catch(e){}setShareUI()}
+$('lbtn').onclick=async()=>{
+ if(shareOn)return stopShare();
+ if(!me.supervisorId)return alert('An admin has not assigned your supervisor yet.');
+ if(!pos)return alert('Waiting for your location. Try again in a moment.');
+ if(!confirm('Your supervisor will see where you are, live, until you tap Stop sharing. Continue?'))return;
+ shareOn=true;lastShare=0;setShareUI();await pushLive(true);try{wl=await navigator.wakeLock.request('screen')}catch(e){}};
+document.addEventListener('visibilitychange',async()=>{if(shareOn&&document.visibilityState==='visible'){try{wl=await navigator.wakeLock.request('screen')}catch(e){}pushLive(true)}});
+function startLive(){stopLive();if(!me)return;const c=db.collection('live');
+ const qs=me.role==='admin'?[c]:me.role==='super'?[c.where('superId','==',me.uid),c.where('supervisorId','==',me.uid)]:[c.where('supervisorId','==',me.uid)];
+ qs.forEach((q,i)=>{liveUn.push(q.onSnapshot(sn=>{liveRows[i]=sn.docs.map(d=>({id:d.id,...d.data()}));renderLive()},e=>{$('livenote').textContent='Could not load live locations. '+why(e)}))})}
+function stopLive(){liveUn.forEach(f=>f());liveUn=[];liveRows={}}
+const ago=x=>x<60?'just now':x<3600?Math.floor(x/60)+' min ago':Math.floor(x/3600)+' h ago';
+function renderLive(){
+ const m={};Object.values(liveRows).forEach(a=>a.forEach(r=>{m[r.id]=r}));
+ const rows=Object.values(m).sort((a,b)=>String(a.name).localeCompare(String(b.name))),t=now().getTime()/1000;
+ $('livetab').innerHTML='<tr><th>Staff</th><th>Status</th><th>Where</th></tr>'+(rows.map(r=>{const age=r.at?Math.max(0,Math.round(t-r.at.seconds)):0,live=age<150;
+  return `<tr><td>${esc(r.name)}<br><small>${esc(r.position)}</small></td><td style="color:${live?'#5fd08a':'#e8b32a'}">${live?'Live':'Last seen'}<br><small>${ago(age)}</small></td><td><a href="#" data-m="${esc(r.id)}">Show map</a><br><small>±${r.accuracy} m</small></td></tr>`}).join('')||'<tr><td colspan=3>Nobody is sharing a location with you right now.</td></tr>');
+ $('livetab').querySelectorAll('[data-m]').forEach(a=>{a.onclick=e=>{e.preventDefault();const r=m[a.dataset.m];if(!r)return;
+  $('maph').textContent=r.name;$('mapf').src='https://www.openstreetmap.org/export/embed.html?bbox='+(r.lng-.006)+'%2C'+(r.lat-.004)+'%2C'+(r.lng+.006)+'%2C'+(r.lat+.004)+'&layer=mapnik&marker='+r.lat+'%2C'+r.lng;
+  $('mapg').href='https://maps.google.com/?q='+r.lat+','+r.lng;$('mapcard').classList.remove('hide');$('mapcard').scrollIntoView()}})}
+setInterval(()=>{if(liveUn.length)renderLive()},20000);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 </script></body></html>

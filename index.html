@@ -39,13 +39,11 @@ img.fp{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-to
 .chk{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--ln);color:var(--txt);font-size:14px;margin:0}.chk input{width:22px;height:22px;flex:none;padding:0;margin:0}
 input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e8b32a;background:transparent!important}
 .mut{color:var(--mut);font-size:12px}details summary{cursor:pointer;padding:6px 0}
-.chk{display:flex;align-items:center;gap:10px;margin:0;padding:8px 0;font-size:14px;color:var(--txt);border-bottom:1px solid var(--ln)}.chk input{width:22px;height:22px;padding:0;flex:none;accent-color:#e8b32a;background:transparent!important;-webkit-appearance:checkbox;appearance:auto}
-h3{margin:18px 0 4px;font-size:14px}
 .chips{display:flex;gap:6px;margin:10px 0 0;overflow-x:auto}.chips button{margin:0;width:auto;padding:6px 12px;background:#12362b;color:#fff;border:1px solid #3d6b5a;font-size:13px}
 .modal{overflow:auto;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
 </style></head><body>
-<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v3.8</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
+<header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v1.0</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
 <div id="cam" class="modal hide" style="justify-content:flex-start;overflow:auto;padding-top:calc(16px + env(safe-area-inset-top,0px))"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;max-height:52vh;object-fit:contain;border-radius:14px;background:#000;transform:scaleX(-1)"></video><button id="cf" class="alt hide" style="max-width:360px">Switch camera (front / back)</button><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
 <div id="pv" class="modal hide"><div id="pvm"></div><img id="pvi" alt="Selfie" style="max-width:100%;max-height:65vh;border-radius:12px"><button id="pvc" style="max-width:360px">Close</button></div>
 <div id="rmod" class="modal hide" style="justify-content:flex-start;overflow:auto"><div id="rmb" style="width:100%;max-width:520px;text-align:left"></div><button id="rmc" style="max-width:360px">Close</button></div>
@@ -95,14 +93,13 @@ h3{margin:18px 0 4px;font-size:14px}
   <label>Search</label><input id="rq" type="search" placeholder="Staff name, position, place, Late, or a date like 2026-10-07"><div id="rc" style="color:var(--mut);font-size:12px;margin-top:6px"></div>
   <div class="row" style="margin-top:4px"><div><label>View</label><select id="rv"><option value="sum">Daily summary</option><option value="all">All entries</option><option value="mv">Field movements</option></select></div><div><label>Late after</label><input type="time" id="late" value="08:00"></div></div>
   <div class="row" style="margin-top:12px"><button id="rl">Show</button><button id="rx" class="alt" style="margin-top:0">Export CSV</button></div>
-  <button id="sendrep" class="alt hide">Send report to my Super Supervisor</button>
+  <button id="sendrep" class="alt hide">Send report to my Senior Supervisor</button>
   <div class="tbl" style="margin-top:10px"><table id="rtab"></table></div>
   <h2 style="margin-top:18px">Count per staff</h2><div class="tbl"><table id="ctab"></table></div></div></section>
  <section id="t-live" class="hide"><div class="card"><h2>Live locations</h2><div id="livenote" style="color:var(--mut);font-size:12px;margin-bottom:8px">Staff who are sharing their location with you appear here and update by themselves.</div><div class="tbl"><table id="livetab"></table></div></div>
   <div class="card hide" id="mapcard"><h2 id="maph">Map</h2><iframe id="mapf" title="Map" style="width:100%;height:300px;border:0;border-radius:10px" loading="lazy"></iframe><p><a id="mapg" href="#" target="_blank" rel="noopener">Open in Google Maps</a></p></div></section>
  <section id="t-rep" class="hide"><div class="card"><h2 id="reph">Reports</h2><div class="tbl"><table id="reptab"></table></div></div></section>
  <section id="t-adm" class="hide">
-  <div class="card"><h2>Teams</h2><div id="teams"></div></div>
   <div class="card"><h2>Allowed locations</h2>
    <label>Name</label><input id="ln"><div class="row"><div><label>Latitude</label><input id="la" inputmode="decimal"></div><div><label>Longitude</label><input id="lg" inputmode="decimal"></div></div>
    <label>Radius (metres)</label><input id="lr" type="number" value="100">
@@ -112,7 +109,9 @@ h3{margin:18px 0 4px;font-size:14px}
   <select id="tsup"></select><input id="tq" type="search" placeholder="Search staff by name or position" style="margin-top:8px">
   <div class="row" style="margin:8px 0"><button id="tall" class="alt" style="margin:0">Tick all unassigned</button><button id="tclr" class="alt" style="margin:0">Untick all</button></div>
   <div id="tlist"></div><button id="tsave">Save this team</button><div id="tmsg"></div></div>
- <div class="card"><h2>Supervisors under a Super Supervisor</h2><p class="mut">Choose a Super Supervisor and tick the supervisors who report to them. Their staff follow automatically.</p>
+ <div class="card"><h2>Move a whole team</h2><p class="mut">Use this when a supervisor leaves or changes role. All their staff move to the new supervisor.</p>
+  <label>From supervisor</label><select id="mvA"></select><label>To supervisor</label><select id="mvB"></select><button id="mvgo" class="alt">Move all their staff</button><div id="mvmsg"></div></div>
+ <div class="card"><h2>Supervisors under a Senior Supervisor</h2><p class="mut">Choose a Senior Supervisor and tick the supervisors who report to them. Their staff follow automatically.</p>
   <select id="tsuper"></select><div id="tslist" style="margin-top:8px"></div><button id="tssave">Save</button><div id="tsmsg"></div></div>
  <div class="card"><h2>Structure</h2><div id="tree"></div></div>
  <div class="card"><h2>Staff</h2><div class="tbl"><table id="stab"></table></div></div>
@@ -161,7 +160,7 @@ auth.onAuthStateChanged(async u=>{
  document.querySelectorAll('.adm').forEach(e=>e.classList.toggle('hide',me.role!=='admin'));
  document.querySelectorAll('.rep').forEach(e=>e.classList.toggle('hide',!['supervisor','super','admin'].includes(me.role)));$('sendrep').classList.toggle('hide',me.role!=='supervisor');
  const canExp=['admin','supervisor','super'].includes(me.role);$('rx').classList.toggle('hide',!canExp);$('rl').parentElement.style.gridTemplateColumns=canExp?'1fr 1fr':'1fr';
- await loadLocs();watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(s.exists?'Role: '+(me.role||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v3.3';
+ await loadLocs();watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(s.exists?'Role: '+({staff:'Staff',supervisor:'Supervisor',super:'Senior supervisor',admin:'Admin'}[me.role]||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v1.0';
 });
 
 /* ---------- tabs ---------- */
@@ -290,48 +289,12 @@ $('rx').onclick=()=>{if(!me||!['admin','supervisor','super'].includes(me.role)||
 $('lu').onclick=()=>pos?($('la').value=pos.latitude.toFixed(6),$('lg').value=pos.longitude.toFixed(6)):alert('Waiting for GPS.');
 $('ls').onclick=async()=>{const n=$('ln').value.trim(),a=+$('la').value,g=+$('lg').value,r=+$('lr').value;if(!n||!a||!g||r<10)return alert('Enter a name, coordinates and a radius of at least 10 m.');
  await db.collection('locations').add({name:n,lat:a,lng:g,radius:r,active:true});['ln','la','lg'].forEach(i=>$(i).value='');await loadLocs();admin()};
-function teams(U){
- const ids=Object.keys(U),by=r=>ids.filter(k=>U[k].role===r).sort((a,b)=>String(U[a].name).localeCompare(String(U[b].name)));
- const staff=by('staff'),sups=by('supervisor'),supers=by('super'),nm=k=>k&&U[k]?esc(U[k].name):'',has=k=>!!(U[k].supervisorId&&U[U[k].supervisorId]);
- const op=(a,ph)=>`<option value="">${ph}</option>`+a.map(k=>`<option value="${k}">${esc(U[k].name)}</option>`).join('');
- const chk=(k,lab)=>`<label class="chk" data-q="${esc((U[k].name+' '+(U[k].position||'')).toLowerCase())}"><input type="checkbox" data-k="${k}"><span>${esc(U[k].name)}<br><small>${esc(U[k].position||'')} · ${lab}</small></span></label>`;
- const sl=staff.map(k=>chk(k,has(k)?'under '+nm(U[k].supervisorId):'<b>unassigned</b>')).join('')||'<p>No staff yet.</p>';
- const pl=sups.map(k=>chk(k,has(k)?'reports to '+nm(U[k].supervisorId):'<b>no super supervisor</b>')).join('')||`<p>No supervisors yet. Change someone's role to supervisor first.</p>`;
- const teamOf=x=>{const st=staff.filter(y=>U[y].supervisorId===x);return `<p style="margin:4px 0 4px 14px">${nm(x)} <small>supervisor · ${st.length} staff</small>${st.length?'<br><small>'+st.map(nm).join(', ')+'</small>':''}</p>`};
- const tree=supers.map(sp=>`<p style="margin:10px 0 0"><b>${nm(sp)}</b> <small>super supervisor</small></p>`+(sups.filter(x=>U[x].supervisorId===sp).map(teamOf).join('')||'<p style="margin-left:14px"><small>No supervisors yet</small></p>')).join('');
- const un1=staff.filter(k=>!has(k)),un2=sups.filter(k=>!has(k));
- $('teams').innerHTML=`<h3>1. Staff to supervisor</h3><label>Supervisor</label><select id="tsup">${op(sups,'Choose a supervisor')}</select>
- <label>Find staff</label><input id="tf1" type="search" placeholder="Search by name or position">
- <label class="chk"><input type="checkbox" id="tall1"><span>Select all shown</span></label><div id="tl1" style="max-height:260px;overflow:auto">${sl}</div>
- <div class="row" style="margin-top:10px"><button id="tgo1">Assign selected</button><button id="tun1" class="alt">Remove supervisor</button></div>
- <h3>2. Supervisor to super supervisor</h3><label>Super supervisor</label><select id="tsp">${op(supers,'Choose a super supervisor')}</select>
- <label>Find supervisors</label><input id="tf2" type="search" placeholder="Search by name">
- <div id="tl2" style="max-height:220px;overflow:auto">${pl}</div>
- <div class="row" style="margin-top:10px"><button id="tgo2">Assign selected</button><button id="tun2" class="alt">Remove</button></div>
- <h3>3. Move a whole team</h3><label>From supervisor</label><select id="mvA">${op(sups,'Choose')}</select><label>To supervisor</label><select id="mvB">${op(sups,'Choose')}</select><button id="mvgo" class="alt">Move all their staff</button>
- <h3>Team overview</h3>${tree||'<p><small>No super supervisor yet. Change someone to super supervisor first.</small></p>'}
- ${un2.length?'<p style="margin:12px 0 0"><b>Supervisors without a super supervisor</b></p>'+un2.map(teamOf).join(''):''}
- ${un1.length?`<p style="margin:12px 0 0"><b>Staff without a supervisor (${un1.length})</b><br><small>${un1.map(nm).join(', ')}</small></p>`:''}
- <p style="color:var(--mut);font-size:12px">Changes apply to new records. Past records stay with the supervisor the staff member had at the time.</p>`;
- const got=id=>[...$(id).querySelectorAll('input[data-k]')].filter(i=>i.checked).map(i=>i.dataset.k);
- const filt=(f,l)=>{$(f).oninput=()=>{const w=$(f).value.toLowerCase();$(l).querySelectorAll('[data-q]').forEach(e=>{e.style.display=e.dataset.q.includes(w)?'':'none'})}};filt('tf1','tl1');filt('tf2','tl2');
- $('tall1').onchange=()=>{$('tl1').querySelectorAll('[data-q]').forEach(e=>{if(e.style.display!=='none')e.querySelector('input').checked=$('tall1').checked})};
- const up=(b,id,o)=>b.update(db.collection('users').doc(id),o);
- const run=async(f,msg)=>{try{await f();alert(msg);admin()}catch(e){alert('Could not save. '+why(e))}};
- $('tgo1').onclick=()=>{const sv=$('tsup').value,k=got('tl1');if(!sv)return alert('Choose a supervisor first.');if(!k.length)return alert('Tick the staff you want to assign.');
-  run(async()=>{const b=db.batch();k.forEach(id=>up(b,id,{supervisorId:sv,superId:U[sv].supervisorId||null}));await b.commit()},k.length+' staff assigned to '+U[sv].name+'.')};
- $('tun1').onclick=()=>{const k=got('tl1');if(!k.length)return alert('Tick the staff first.');run(async()=>{const b=db.batch();k.forEach(id=>up(b,id,{supervisorId:null,superId:null}));await b.commit()},k.length+' staff now have no supervisor.')};
- const setSuper=(k,sp)=>run(async()=>{const b=db.batch();k.forEach(id=>{up(b,id,{supervisorId:sp});staff.filter(y=>U[y].supervisorId===id).forEach(y=>up(b,y,{superId:sp}))});await b.commit()},sp?k.length+' supervisor(s) assigned to '+U[sp].name+'.':k.length+' supervisor(s) removed from their super supervisor.');
- $('tgo2').onclick=()=>{const sp=$('tsp').value,k=got('tl2');if(!sp)return alert('Choose a super supervisor first.');if(!k.length)return alert('Tick the supervisors you want to assign.');setSuper(k,sp)};
- $('tun2').onclick=()=>{const k=got('tl2');if(!k.length)return alert('Tick the supervisors first.');setSuper(k,null)};
- $('mvgo').onclick=()=>{const a=$('mvA').value,c=$('mvB').value;if(!a||!c||a===c)return alert('Choose two different supervisors.');const k=staff.filter(y=>U[y].supervisorId===a);if(!k.length)return alert('That supervisor has no staff.');
-  if(!confirm('Move '+k.length+' staff from '+U[a].name+' to '+U[c].name+'?'))return;run(async()=>{const b=db.batch();k.forEach(id=>up(b,id,{supervisorId:c,superId:U[c].supervisorId||null}));await b.commit()},'Moved '+k.length+' staff.')}}
 async function admin(){
  $('ltab').innerHTML='<tr><th>Location</th><th>Radius</th><th></th></tr>'+locs.map(l=>`<tr><td>${esc(l.name)}</td><td>${l.radius} m</td><td><a href="#" data-d="${l.id}">Remove</a></td></tr>`).join('');
  $('ltab').querySelectorAll('[data-d]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(confirm('Remove this location?')){await db.collection('locations').doc(a.dataset.d).update({active:false});await loadLocs();admin()}});
- const s=await db.collection('users').get(),U={};s.docs.forEach(d=>{U[d.id]=d.data()});teams(U);teamsUI(U);const opts=(role,cur)=>'<option value="">None</option>'+s.docs.filter(d=>d.data().role===role).map(d=>`<option value="${d.id}"${cur===d.id?' selected':''}>${esc(d.data().name)}</option>`).join('');
+ const s=await db.collection('users').get(),U={};s.docs.forEach(d=>{U[d.id]=d.data()});teamsUI(U);const opts=(role,cur)=>'<option value="">None</option>'+s.docs.filter(d=>d.data().role===role).map(d=>`<option value="${d.id}"${cur===d.id?' selected':''}>${esc(d.data().name)}</option>`).join('');
  $('stab').innerHTML='<tr><th>Staff</th><th>Role</th><th>Supervisor / reports to</th><th>Locations (none = all)</th><th>Phone</th></tr>'+s.docs.map(d=>{const u=d.data();return`<tr><td>${esc(u.name)}<br><small>${esc(u.position)}</small></td>
- <td><select data-r="${d.id}"><option${u.role==='staff'?' selected':''}>staff</option><option${u.role==='supervisor'?' selected':''}>supervisor</option><option value="super"${u.role==='super'?' selected':''}>super supervisor</option><option${u.role==='admin'?' selected':''}>admin</option></select></td>
+ <td><select data-r="${d.id}"><option${u.role==='staff'?' selected':''}>staff</option><option${u.role==='supervisor'?' selected':''}>supervisor</option><option value="super"${u.role==='super'?' selected':''}>senior supervisor</option><option${u.role==='admin'?' selected':''}>admin</option></select></td>
  <td>${u.role==='staff'?`<select data-s="${d.id}">${opts('supervisor',u.supervisorId)}</select>`:u.role==='supervisor'?`<select data-s="${d.id}">${opts('super',u.supervisorId)}</select>`:'–'}</td>
  <td><select multiple data-l="${d.id}" size="3">${locs.map(l=>`<option value="${l.id}"${(u.locations||[]).includes(l.id)?' selected':''}>${esc(l.name)}</option>`).join('')}</select></td>
  <td>${u.deviceId?`<a href="#" data-x="${d.id}">Reset</a>`:'Not set'}</td></tr>`}).join('');
@@ -379,17 +342,17 @@ async function fcount(){try{const d=day(now()),all=await qm(day(new Date(now()-3
  $('flist').innerHTML='<tr><th>Time</th><th>Where</th><th>Note</th></tr>'+(all.map(x=>`<tr><td>${fmt(x.at)}${x.photoId?ph({id:x.photoId}):''}</td><td><a href="https://maps.google.com/?q=${x.lat},${x.lng}" target="_blank" rel="noopener">Map</a></td><td>${esc(x.note)}</td></tr>`).join('')||'<tr><td colspan=3>No field records yet.</td></tr>');homeStat()}catch(e){}}
 function homeStat(){$('ts1').textContent=st.out?'Signed in and out today':st.in?'Signed in. Sign out when you leave':'Not signed in yet';$('ts2').textContent=fToday?fToday+' field record(s) today':'Record where you are'}
 document.querySelectorAll('[data-go]').forEach(t=>{t.onclick=()=>document.querySelector('.tabs button[data-t="'+t.dataset.go+'"]').click()});
-/* ---------- reports: supervisor -> super supervisor ---------- */
+/* ---------- reports: supervisor -> senior supervisor ---------- */
 $('sendrep').onclick=async()=>{
- if(!me.supervisorId)return alert('An admin has not assigned your Super Supervisor yet.');
+ if(!me.supervisorId)return alert('An admin has not assigned your Senior Supervisor yet.');
  if(!last.length&&!lastM.length)return alert('Tap Show first to load the records you want to report.');
  const f=$('rf').value||day(now()),t=$('rt').value||f,mine=last.filter(r=>r.supervisorId===me.uid),mm=lastM.filter(r=>r.supervisorId===me.uid),cn=counts(summarise(mine,$('late').value)),fc={};
  mm.forEach(r=>{fc[r.uid]=(fc[r.uid]||0)+1});
  const staff=cn.map(o=>({name:o.name,position:o.position,days:o.d,late:o.l,mins:Math.round(o.m),field:fc[o.uid]||0}));
  Object.keys(fc).forEach(u=>{if(!cn.some(o=>o.uid===u)){const x=mm.find(r=>r.uid===u);staff.push({name:x.name,position:x.position,days:0,late:0,mins:0,field:fc[u]})}});
  if(!staff.length)return alert('There are no records from your staff in this period.');
- if(!confirm('Send this report for '+f+' to '+t+' to your Super Supervisor?'))return;
- const note=(prompt('Add a short note for your Super Supervisor (optional)')||'').slice(0,300);
+ if(!confirm('Send this report for '+f+' to '+t+' to your Senior Supervisor?'))return;
+ const note=(prompt('Add a short note for your Senior Supervisor (optional)')||'').slice(0,300);
  try{await db.collection('reports').add({fromUid:me.uid,fromName:me.name,toUid:me.supervisorId,from:f,to:t,lateAfter:$('late').value,staff,note,read:false,at:TS()});alert('Report sent.')}catch(e){alert('Could not send the report. Try again.')}};
 async function loadReports(){
  const c=db.collection('reports');let sn;
@@ -444,7 +407,7 @@ function teamsUI(U){
  const sups=ids('supervisor'),supers=ids('super'),staff=ids('staff'),nm=k=>k&&U[k]?U[k].name:'nobody';
  const keepA=$('tsup').value,keepB=$('tsuper').value;
  $('tsup').innerHTML='<option value="">Choose a supervisor…</option>'+sups.map(k=>`<option value="${k}">${esc(U[k].name)} (${staff.filter(x=>U[x].supervisorId===k).length} staff)</option>`).join('');
- $('tsuper').innerHTML='<option value="">Choose a Super Supervisor…</option>'+supers.map(k=>`<option value="${k}">${esc(U[k].name)} (${sups.filter(x=>U[x].supervisorId===k).length} supervisors)</option>`).join('');
+ $('tsuper').innerHTML='<option value="">Choose a Senior Supervisor…</option>'+supers.map(k=>`<option value="${k}">${esc(U[k].name)} (${sups.filter(x=>U[x].supervisorId===k).length} supervisors)</option>`).join('');
  if(keepA&&U[keepA])$('tsup').value=keepA;if(keepB&&U[keepB])$('tsuper').value=keepB;
  const pickT=()=>{selT=new Set(staff.filter(k=>U[k].supervisorId===$('tsup').value))};
  const pickS=()=>{selS=new Set(sups.filter(k=>U[k].supervisorId===$('tsuper').value))};
@@ -452,7 +415,7 @@ function teamsUI(U){
  const drawT=()=>{const X=$('tsup').value,q=($('tq').value||'').toLowerCase();
   $('tlist').innerHTML=!X?'<p class="mut">Choose a supervisor to see the staff list.</p>':(staff.filter(k=>(U[k].name+' '+U[k].position).toLowerCase().includes(q)).map(k=>`<label class="chk"><input type="checkbox" data-k="${k}"${selT.has(k)?' checked':''}><span>${esc(U[k].name)}<br><small class="mut">${esc(U[k].position)}${where(k,X)?' · '+where(k,X):''}</small></span></label>`).join('')||'<p class="mut">No staff found.</p>')};
  const drawS=()=>{const X=$('tsuper').value;
-  $('tslist').innerHTML=!X?'<p class="mut">Choose a Super Supervisor to see the supervisors.</p>':(sups.map(k=>`<label class="chk"><input type="checkbox" data-k="${k}"${selS.has(k)?' checked':''}><span>${esc(U[k].name)}<br><small class="mut">${staff.filter(x=>U[x].supervisorId===k).length} staff${where(k,X)?' · '+where(k,X):''}</small></span></label>`).join('')||'<p class="mut">No supervisors yet. Set someone\'s role to supervisor first.</p>')};
+  $('tslist').innerHTML=!X?'<p class="mut">Choose a Senior Supervisor to see the supervisors.</p>':(sups.map(k=>`<label class="chk"><input type="checkbox" data-k="${k}"${selS.has(k)?' checked':''}><span>${esc(U[k].name)}<br><small class="mut">${staff.filter(x=>U[x].supervisorId===k).length} staff${where(k,X)?' · '+where(k,X):''}</small></span></label>`).join('')||'<p class="mut">No supervisors yet. Set someone\'s role to supervisor first.</p>')};
  pickT();pickS();drawT();drawS();
  $('tsup').onchange=()=>{pickT();$('tmsg').innerHTML='';drawT()};$('tsuper').onchange=()=>{pickS();$('tsmsg').innerHTML='';drawS()};$('tq').oninput=drawT;
  $('tlist').onchange=e=>{const c=e.target;if(c.dataset&&c.dataset.k){c.checked?selT.add(c.dataset.k):selT.delete(c.dataset.k)}};
@@ -464,7 +427,7 @@ function teamsUI(U){
   staff.forEach(k=>{const u=U[k];if(selT.has(k)&&u.supervisorId!==X){ops.push([k,{supervisorId:X,superId:U[X].supervisorId||null}]);a++}else if(!selT.has(k)&&u.supervisorId===X){ops.push([k,{supervisorId:null,superId:null}]);r++}});
   if(!ops.length)return say('tmsg','No changes to save.','');
   try{await commitOps(ops);say('tmsg',a+' added, '+r+' removed. Only new records follow the change; old records stay with the earlier supervisor.','good');admin()}catch(e){say('tmsg','Could not save. '+why(e),'bad')}};
- $('tssave').onclick=async()=>{const Z=$('tsuper').value;if(!Z)return say('tsmsg','Choose a Super Supervisor first.','bad');
+ $('tssave').onclick=async()=>{const Z=$('tsuper').value;if(!Z)return say('tsmsg','Choose a Senior Supervisor first.','bad');
   const ops=[];let a=0,r=0;
   sups.forEach(k=>{const u=U[k],mine=staff.filter(x=>U[x].supervisorId===k);
    if(selS.has(k)&&u.supervisorId!==Z){ops.push([k,{supervisorId:Z}]);mine.forEach(x=>ops.push([x,{superId:Z}]));a++}
@@ -472,10 +435,18 @@ function teamsUI(U){
   if(!ops.length)return say('tsmsg','No changes to save.','');
   try{await commitOps(ops);say('tsmsg',a+' added, '+r+' removed.','good');admin()}catch(e){say('tsmsg','Could not save. '+why(e),'bad')}};
  const blk=sv=>{const st=staff.filter(k=>U[k].supervisorId===sv);return `<details style="margin-left:14px"><summary>${esc(U[sv].name)} · ${st.length} staff</summary><div class="mut" style="margin-left:14px">${st.map(k=>esc(U[k].name)).join(', ')||'No staff yet'}</div></details>`};
- const tree=supers.map(z=>{const m=sups.filter(x=>U[x].supervisorId===z);return `<details open><summary><b>${esc(U[z].name)}</b> · Super Supervisor · ${m.length} supervisor(s)</summary>${m.map(blk).join('')||'<p class="mut" style="margin-left:14px">No supervisors yet.</p>'}</details>`});
- const loose=sups.filter(x=>!U[x].supervisorId);if(loose.length)tree.push(`<details open><summary><b>Supervisors with no Super Supervisor</b> · ${loose.length}</summary>${loose.map(blk).join('')}</details>`);
+ const tree=supers.map(z=>{const m=sups.filter(x=>U[x].supervisorId===z);return `<details open><summary><b>${esc(U[z].name)}</b> · Senior Supervisor · ${m.length} supervisor(s)</summary>${m.map(blk).join('')||'<p class="mut" style="margin-left:14px">No supervisors yet.</p>'}</details>`});
+ const loose=sups.filter(x=>!U[x].supervisorId);if(loose.length)tree.push(`<details open><summary><b>Supervisors with no Senior Supervisor</b> · ${loose.length}</summary>${loose.map(blk).join('')}</details>`);
  const un=staff.filter(k=>!U[k].supervisorId);
  tree.push(un.length?`<p style="color:#e8b32a">${un.length} staff have no supervisor, so only they and admins can see their records: ${un.map(k=>esc(U[k].name)).join(', ')}</p>`:'<p style="color:#5fd08a">Every staff member has a supervisor.</p>');
+
+ const mvOpt=()=>'<option value="">Choose a supervisor…</option>'+sups.map(k=>`<option value="${k}">${esc(U[k].name)} (${staff.filter(x=>U[x].supervisorId===k).length} staff)</option>`).join('');
+ const kA=$('mvA').value,kB=$('mvB').value;$('mvA').innerHTML=mvOpt();$('mvB').innerHTML=mvOpt();if(kA&&U[kA])$('mvA').value=kA;if(kB&&U[kB])$('mvB').value=kB;
+ $('mvgo').onclick=async()=>{const A=$('mvA').value,B=$('mvB').value;
+  if(!A||!B)return say('mvmsg','Choose both supervisors.','bad');if(A===B)return say('mvmsg','Choose two different supervisors.','bad');
+  const k=staff.filter(x=>U[x].supervisorId===A);if(!k.length)return say('mvmsg',U[A].name+' has no staff to move.','bad');
+  if(!confirm('Move all '+k.length+' staff from '+U[A].name+' to '+U[B].name+'?'))return;
+  try{await commitOps(k.map(x=>[x,{supervisorId:B,superId:U[B].supervisorId||null}]));say('mvmsg',k.length+' staff moved from '+U[A].name+' to '+U[B].name+'. Only new records follow the change; old records stay with the earlier supervisor.','good');admin()}catch(e){say('mvmsg','Could not save. '+why(e),'bad')}};
  $('tree').innerHTML=tree.join('')}
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 </script></body></html>

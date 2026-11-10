@@ -112,6 +112,11 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
    <label class="chk"><input type="checkbox" class="clc" value="movements"><span>Field records (with their photos)</span></label>
    <label class="chk"><input type="checkbox" class="clc" value="reports"><span>Reports</span></label>
    <button id="clgo" style="background:#c8372d">Clear selected records</button><div id="clm"></div></div>
+  <div class="card adm hide"><h2>Backup</h2><p class="mut">Download a copy of the data as a file you can keep safe. Selfies make the file much bigger.</p>
+   <div class="sa hide"><label>Institution</label><select id="bki"></select></div>
+   <label class="chk"><input type="checkbox" id="bkp" checked><span>Include selfies and photos</span></label>
+   <button id="bkd">Download backup</button>
+   <div style="margin-top:14px"><label>Restore from a backup file</label><input type="file" id="bku" accept=".json,application/json"><button id="bkr" class="alt">Restore from backup</button></div><div id="bkm"></div></div>
   <div class="card adm hide"><h2>Join code</h2><p class="mut">Give this code to staff so they can create accounts under this institution.</p><div id="jc" style="font-size:22px;font-weight:800;letter-spacing:3px"></div><button id="jcn" class="alt">Generate a new code</button></div>
   <div class="card"><h2>Allowed locations</h2>
    <label>Name</label><input id="ln"><div class="row"><div><label>Latitude</label><input id="la" inputmode="decimal"></div><div><label>Longitude</label><input id="lg" inputmode="decimal"></div></div>
@@ -344,7 +349,7 @@ let ainstBusy=0;
 const gen=()=>{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',a=new Uint8Array(8);crypto.getRandomValues(a);return[...a].map(x=>A[x%A.length]).join('')};
 async function loadAllInsts(){const s=await db.collection('institutions').get();allInsts=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>x.name.localeCompare(y.name));
  const o=allInsts.map(i=>`<option value="${i.id}">${esc(i.name)}${i.active?'':' (inactive)'}</option>`).join(''),k=$('ainst').value,r=$('rinst').value;
- $('ainst').innerHTML='<option value="">Choose an institution…</option>'+o;$('ainst').value=k;$('rinst').innerHTML='<option value="">All institutions</option>'+o;$('rinst').value=r;const kg=$('mgi').value;$('mgi').innerHTML='<option value="">Choose the institution that owns the old data…</option>'+o;$('mgi').value=kg;const kc=$('cli').value;$('cli').innerHTML='<option value="">All institutions</option>'+o;$('cli').value=kc;
+ $('ainst').innerHTML='<option value="">Choose an institution…</option>'+o;$('ainst').value=k;$('rinst').innerHTML='<option value="">All institutions</option>'+o;$('rinst').value=r;const kg=$('mgi').value;$('mgi').innerHTML='<option value="">Choose the institution that owns the old data…</option>'+o;$('mgi').value=kg;const kc=$('cli').value;$('cli').innerHTML='<option value="">All institutions</option>'+o;$('cli').value=kc;const kb=$('bki').value;$('bki').innerHTML='<option value="">All institutions</option>'+o;$('bki').value=kb;
  $('intab').innerHTML='<tr><th>Institution</th><th>Code</th><th></th></tr>'+allInsts.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.code)}</td><td><a href="#" data-ia="${i.id}">${i.active?'Deactivate':'Activate'}</a><br><a href="#" data-ir="${i.id}">Rename</a></td></tr>`).join('');
  $('intab').querySelectorAll('[data-ia]').forEach(a=>a.onclick=async e=>{e.preventDefault();const i=allInsts.find(x=>x.id===a.dataset.ia),v=!i.active,b=db.batch();b.update(db.collection('institutions').doc(i.id),{active:v});b.update(db.collection('instPublic').doc(i.id),{active:v});await b.commit();admin()});
  $('intab').querySelectorAll('[data-ir]').forEach(a=>a.onclick=async e=>{e.preventDefault();const i=allInsts.find(x=>x.id===a.dataset.ir),n=(prompt('New name for this institution',i.name)||'').trim();
@@ -353,6 +358,32 @@ $('inadd').onclick=async()=>{const n=$('inn').value.trim();if(!n)return say('inm
  try{const r=db.collection('institutions').doc(),b=db.batch();b.set(r,{name:n,code:gen(),active:true,created:TS()});b.set(db.collection('instPublic').doc(r.id),{name:n,active:true});await b.commit();$('inn').value='';say('inmsg','Institution added.','good');admin()}catch(e){say('inmsg','Could not add. '+why(e),'bad')}};
 $('ainst').onchange=()=>admin();$('rinst').onchange=()=>$('rl').onclick();
 $('jcn').onclick=async()=>{const i=mi();if(!i)return;if(!confirm('Generate a new join code? The old code will stop working.'))return;try{await db.collection('institutions').doc(i).update({code:gen()});admin()}catch(e){alert('Could not change the code. '+why(e))}};
+const ser=v=>v&&typeof v==='object'?(v.toDate&&v.seconds!==undefined?{__ts:[v.seconds,v.nanoseconds]}:Array.isArray(v)?v.map(ser):Object.fromEntries(Object.entries(v).map(([k,x])=>[k,ser(x)]))):v;
+const des=v=>v&&typeof v==='object'?(v.__ts?new firebase.firestore.Timestamp(v.__ts[0],v.__ts[1]):Array.isArray(v)?v.map(des):Object.fromEntries(Object.entries(v).map(([k,x])=>[k,des(x)]))):v;
+$('bkd').onclick=async()=>{
+ const i=isSA()?$('bki').value:me.instId,inc=$('bkp').checked;if(!isSA()&&!i)return;
+ $('bkd').disabled=true;say('bkm','Preparing the backup. This can take a while…','');
+ try{const q=c=>i?db.collection(c).where('instId','==',i):db.collection(c),B={app:'atds',version:1,created:new Date().toISOString(),scope:i||'all',collections:{}};
+  for(const c of ['users','locations','attendance','movements','reports'].concat(inc?['photos']:[]))B.collections[c]=(await q(c).get()).docs.filter(d=>d.data().role!=='superadmin').map(d=>({id:d.id,data:ser(d.data())}));
+  if(isSA())B.collections.institutions=(await db.collection('institutions').get()).docs.filter(d=>!i||d.id===i).map(d=>({id:d.id,data:ser(d.data())}));
+  const nm=i?((allInsts.find(x=>x.id===i)||{}).name||i):'all',a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(B)],{type:'application/json'}));a.download='backup-'+String(nm).replace(/[^a-z0-9]+/gi,'-')+'-'+day(now())+'.json';a.click();
+  say('bkm','Backup downloaded: '+Object.keys(B.collections).map(c=>B.collections[c].length+' '+c).join(', ')+'.','good')
+ }catch(e){say('bkm','Backup failed. '+why(e),'bad')}
+ $('bkd').disabled=false};
+$('bkr').onclick=async()=>{
+ const f=$('bku').files[0];if(!f)return say('bkm','Choose a backup file first.','bad');
+ let B;try{B=JSON.parse(await f.text())}catch(e){return say('bkm','That file is not a valid backup.','bad')}
+ if(B.app!=='atds'||!B.collections)return say('bkm','That file is not a backup from this app.','bad');
+ const OK=['users','locations','attendance','movements','reports','photos'].concat(isSA()?['institutions']:[]),own=x=>isSA()||(x.data&&x.data.instId===me.instId),names=Object.keys(B.collections).filter(c=>OK.includes(c)),tot=names.reduce((n,c)=>n+B.collections[c].filter(own).length,0);
+ if(!tot)return say('bkm','This file has no records for '+(isSA()?'this app':'your institution')+'.','bad');
+ if(!confirm('Restore '+tot+' record(s) from a backup made '+(B.created||'')+'? Records with the same ID are overwritten. Nothing is deleted.'+(isSA()?'':' Only records of your own institution are restored.')))return;
+ $('bkr').disabled=true;say('bkm','Restoring…','');
+ try{const ops=[];names.forEach(c=>B.collections[c].filter(own).forEach(x=>{if(c==='users'&&x.data.role==='superadmin')return;ops.push([db.collection(c).doc(x.id),des(x.data)]);if(c==='institutions')ops.push([db.collection('instPublic').doc(x.id),{name:x.data.name,active:x.data.active!==false}])}));
+  for(let a=0;a<ops.length;a+=400){const b=db.batch();ops.slice(a,a+400).forEach(o=>b.set(o[0],o[1]));await b.commit()}
+  say('bkm','Restored '+ops.length+' record(s).','good');admin()}
+ catch(e){say('bkm','Restore stopped. '+why(e),'bad')}
+ $('bkr').disabled=false};
 $('clgo').onclick=async()=>{
  const i=$('cli').value,f=$('clf').value,t=$('clt').value,cs=[...document.querySelectorAll('.clc:checked')].map(x=>x.value);
  if(!f||!t)return say('clm','Choose the From and To dates.','bad');

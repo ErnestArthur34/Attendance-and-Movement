@@ -104,6 +104,14 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
  <section id="t-adm" class="hide">
   <div class="card sa hide"><h2>Institutions</h2><label>Manage institution</label><select id="ainst"></select>
    <label>New institution name</label><input id="inn"><button id="inadd">Add institution</button><div id="inmsg"></div><div class="tbl" style="margin-top:10px"><table id="intab"></table></div></div>
+  <div class="card sa hide"><h2>Move old data into an institution</h2><p class="mut">Use this once for records made before institutions existed. Everything without an institution is assigned to the one you choose.</p><select id="mgi"></select><button id="mgo" class="alt">Migrate old data</button><div id="mgm"></div></div>
+  <div class="card sa hide"><h2>Clear records</h2><p class="mut">Permanently deletes records in a date range. This cannot be undone. Staff accounts are not touched.</p>
+   <label>Institution</label><select id="cli"></select>
+   <div class="row"><div><label>From</label><input type="date" id="clf"></div><div><label>To</label><input type="date" id="clt"></div></div>
+   <label class="chk"><input type="checkbox" class="clc" value="attendance"><span>Attendance (with its selfies)</span></label>
+   <label class="chk"><input type="checkbox" class="clc" value="movements"><span>Field records (with their photos)</span></label>
+   <label class="chk"><input type="checkbox" class="clc" value="reports"><span>Reports</span></label>
+   <button id="clgo" style="background:#c8372d">Clear selected records</button><div id="clm"></div></div>
   <div class="card adm hide"><h2>Join code</h2><p class="mut">Give this code to staff so they can create accounts under this institution.</p><div id="jc" style="font-size:22px;font-weight:800;letter-spacing:3px"></div><button id="jcn" class="alt">Generate a new code</button></div>
   <div class="card"><h2>Allowed locations</h2>
    <label>Name</label><input id="ln"><div class="row"><div><label>Latitude</label><input id="la" inputmode="decimal"></div><div><label>Longitude</label><input id="lg" inputmode="decimal"></div></div>
@@ -133,6 +141,7 @@ const TS=firebase.firestore.FieldValue.serverTimestamp;
 const $=i=>document.getElementById(i),MAXACC=60;
 const DEV=(()=>{try{let d=localStorage.getItem('atds_dev');if(!d){d=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem('atds_dev',d)}return d}catch(e){return 'nodev-'+Math.random().toString(36).slice(2)}})();
 let me=null,locs=[],pos=null,near=null,reg=false,geoOk=false,st={in:false,out:false};
+const legacyMail=async u=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(u.trim().toLowerCase()));return [...new Uint8Array(b)].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')+'@atds.local'};
 const mail=async(u,i)=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode((i||'')+':'+u.trim().toLowerCase()));return [...new Uint8Array(b)].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')+'@atds.local'};
 const pass=p=>p+'#atds-2026'; // Firebase needs 6+ chars; this lets people use any password length
 const say=(el,t,c)=>$(el).innerHTML=t?`<div class="msg ${c||''}">${t}</div>`:'';
@@ -164,7 +173,7 @@ $('go').onclick=async()=>{
  if(mode==='reg'&&(!$('rn').value.trim()||!$('rp').value||!$('rj').value.trim()))return say('am','Enter the join code, your full name and select a position.','bad');
  if(mode==='setup'&&(!$('sn2').value.trim()||!$('sk').value))return say('am','Enter your name and the setup key.','bad');
  const em=await mail(u,iv),pp=pass(p);try{localStorage.setItem('atds_inst',iv)}catch(e){}
- if(mode==='login'){try{await auth.signInWithEmailAndPassword(em,pp)}catch(e){say('am','Could not log in. Check your institution, username and password.','bad')}return}
+ if(mode==='login'){try{await auth.signInWithEmailAndPassword(em,pp)}catch(e){let ok=false;if(iv!=='@platform'){try{await auth.signInWithEmailAndPassword(await legacyMail(u),pp);ok=true}catch(x){}}if(!ok)say('am','Could not log in. Check your institution, username and password.','bad')}return}
  regBusy=true;let c;
  try{c=await auth.createUserWithEmailAndPassword(em,pp)}catch(e){regBusy=false;return say('am',e.code==='auth/email-already-in-use'?'That username is taken in this institution.':'Could not create the account. '+(e.code||''),'bad')}
  try{const ud=db.collection('users').doc(c.user.uid),un=u.trim().toLowerCase();
@@ -178,6 +187,7 @@ async function boot(u){
  if(!u){me=null;$('auth').classList.remove('hide');$('app').classList.add('hide');$('lo').classList.add('hide');return}
  let s;for(let i=0;i<8;i++){s=await db.collection('users').doc(u.uid).get();if(s.exists)break;await new Promise(r=>setTimeout(r,500))}
  me={uid:u.uid,...s.data()};if(me.instId){try{const i=await db.collection('instPublic').doc(me.instId).get();me.instName=i.exists?i.data().name:''}catch(e){}}
+ if(s.exists&&!me.instId&&me.role!=='superadmin'){await auth.signOut();say('am','Your account has not been assigned to an institution yet. Ask the platform owner to run the data migration.','bad');return}
  if(me.deviceId&&me.deviceId!==DEV){await auth.signOut();say('am','This account is registered to another phone. Ask an admin to reset your phone, then log in again.','bad');return}
  if(!me.deviceId){try{await db.collection('users').doc(u.uid).update({deviceId:DEV});me.deviceId=DEV}catch(e){}}
  $('auth').classList.add('hide');$('app').classList.remove('hide');$('lo').classList.remove('hide');
@@ -333,13 +343,41 @@ let ainstBusy=0;
 const gen=()=>{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',a=new Uint8Array(8);crypto.getRandomValues(a);return[...a].map(x=>A[x%A.length]).join('')};
 async function loadAllInsts(){const s=await db.collection('institutions').get();allInsts=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>x.name.localeCompare(y.name));
  const o=allInsts.map(i=>`<option value="${i.id}">${esc(i.name)}${i.active?'':' (inactive)'}</option>`).join(''),k=$('ainst').value,r=$('rinst').value;
- $('ainst').innerHTML='<option value="">Choose an institution…</option>'+o;$('ainst').value=k;$('rinst').innerHTML='<option value="">All institutions</option>'+o;$('rinst').value=r;
+ $('ainst').innerHTML='<option value="">Choose an institution…</option>'+o;$('ainst').value=k;$('rinst').innerHTML='<option value="">All institutions</option>'+o;$('rinst').value=r;const kg=$('mgi').value;$('mgi').innerHTML='<option value="">Choose the institution that owns the old data…</option>'+o;$('mgi').value=kg;const kc=$('cli').value;$('cli').innerHTML='<option value="">All institutions</option>'+o;$('cli').value=kc;
  $('intab').innerHTML='<tr><th>Institution</th><th>Code</th><th></th></tr>'+allInsts.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.code)}</td><td><a href="#" data-ia="${i.id}">${i.active?'Deactivate':'Activate'}</a></td></tr>`).join('');
  $('intab').querySelectorAll('[data-ia]').forEach(a=>a.onclick=async e=>{e.preventDefault();const i=allInsts.find(x=>x.id===a.dataset.ia),v=!i.active,b=db.batch();b.update(db.collection('institutions').doc(i.id),{active:v});b.update(db.collection('instPublic').doc(i.id),{active:v});await b.commit();admin()})}
 $('inadd').onclick=async()=>{const n=$('inn').value.trim();if(!n)return say('inmsg','Enter the institution name.','bad');
  try{const r=db.collection('institutions').doc(),b=db.batch();b.set(r,{name:n,code:gen(),active:true,created:TS()});b.set(db.collection('instPublic').doc(r.id),{name:n,active:true});await b.commit();$('inn').value='';say('inmsg','Institution added.','good');admin()}catch(e){say('inmsg','Could not add. '+why(e),'bad')}};
 $('ainst').onchange=()=>admin();$('rinst').onchange=()=>$('rl').onclick();
 $('jcn').onclick=async()=>{const i=mi();if(!i)return;if(!confirm('Generate a new join code? The old code will stop working.'))return;try{await db.collection('institutions').doc(i).update({code:gen()});admin()}catch(e){alert('Could not change the code. '+why(e))}};
+$('clgo').onclick=async()=>{
+ const i=$('cli').value,f=$('clf').value,t=$('clt').value,cs=[...document.querySelectorAll('.clc:checked')].map(x=>x.value);
+ if(!f||!t)return say('clm','Choose the From and To dates.','bad');
+ if(!cs.length)return say('clm','Tick at least one kind of record to clear.','bad');
+ const nm=i?((allInsts.find(x=>x.id===i)||{}).name||'this institution'):'ALL institutions';
+ if(prompt('This permanently deletes the selected records for '+nm+' from '+f+' to '+t+'. Type DELETE to confirm.')!=='DELETE')return say('clm','Cancelled. Nothing was deleted.','');
+ $('clgo').disabled=true;say('clm','Working…','');
+ try{const refs=[],ph=new Set(),n={};
+  for(const c of cs){n[c]=0;(await db.collection(c).get()).docs.forEach(d=>{const x=d.data();if(i&&x.instId!==i)return;const dt=x.date||(x.at?day(x.at.toDate()):'');if(!(dt>=f&&dt<=t))return;refs.push(d.ref);n[c]++;if(x.photoId)ph.add(x.photoId)})}
+  ph.forEach(p=>refs.push(db.collection('photos').doc(p)));
+  for(let a=0;a<refs.length;a+=400){const b=db.batch();refs.slice(a,a+400).forEach(r=>b.delete(r));await b.commit()}
+  say('clm','Deleted: '+Object.keys(n).map(k=>n[k]+' '+k).join(', ')+(ph.size?', '+ph.size+' photo(s)':'')+'.','good')
+ }catch(e){say('clm','Clearing stopped. '+why(e),'bad')}
+ $('clgo').disabled=false};
+$('mgo').onclick=async()=>{
+ const i=$('mgi').value;if(!i)return say('mgm','Choose the institution that owns the old data.','bad');
+ const I=allInsts.find(x=>x.id===i);if(!confirm('Assign ALL old records that have no institution to '+I.name+'? This cannot be undone.'))return;
+ $('mgo').disabled=true;say('mgm','Working…','');
+ try{const ops=[],ph=new Set();
+  for(const c of ['users','locations','attendance','movements','reports','live']){(await db.collection(c).get()).docs.forEach(d=>{const x=d.data();if(x.instId||x.role==='superadmin')return;ops.push(d.ref);if(x.photoId)ph.add(x.photoId)})}
+  ph.forEach(p=>ops.push(db.collection('photos').doc(p)));
+  let ok=0,bad=0;
+  for(let a=0;a<ops.length;a+=400){const ch=ops.slice(a,a+400);
+   try{const b=db.batch();ch.forEach(r=>b.update(r,{instId:i}));await b.commit();ok+=ch.length}
+   catch(e){for(const r of ch){try{await r.update({instId:i});ok++}catch(x){bad++}}}}
+  say('mgm',ok+' record(s) assigned to '+esc(I.name)+(bad?', '+bad+' skipped (missing or refused)':'')+'. Old users can now log in with this institution selected.',bad?'':'good')
+ }catch(e){say('mgm','Migration stopped. '+why(e),'bad')}
+ $('mgo').disabled=false};
 async function admin(){
  if(isSA())await loadAllInsts();const i0=mi();
  if(!i0){['ltab','stab','tree','tlist','tslist','tsup','tsuper','mvA','mvB'].forEach(x=>$(x).innerHTML='');$('jc').textContent='';return}

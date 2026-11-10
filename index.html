@@ -42,6 +42,7 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
 .chips{display:flex;gap:6px;margin:10px 0 0;overflow-x:auto}.chips button{margin:0;width:auto;padding:6px 12px;background:#12362b;color:#fff;border:1px solid #3d6b5a;font-size:13px}
 .modal{overflow:auto;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;color:#fff;text-align:center}.modal.hide{display:none}
 .modal .row{width:100%;max-width:360px}a.ph{text-decoration:none;font-size:16px;margin-left:4px}
+.pwf{position:relative}.pwf input{padding-right:48px}.pwf .eye{position:absolute;right:2px;top:0;bottom:0;width:44px;margin:0;padding:0;background:transparent!important;border:0;font-size:18px;line-height:1}
 </style></head><body>
 <header><div><b>Ghana TVET Service</b><small>Central Regional Directorate · Attendance &amp; Field · v1.0</small></div><div class="hr"><button id="lo" class="alt hide" style="width:auto;margin:0;padding:6px 12px;color:#fff;border-color:#ffffff55">Log out</button><img class="logo" src="logo.png" alt="Ghana TVET Service logo"></div></header>
 <div id="cam" class="modal hide" style="justify-content:flex-start;overflow:auto;padding-top:calc(16px + env(safe-area-inset-top,0px))"><div style="font-weight:600">Take a selfie to continue</div><video id="vid" playsinline muted style="width:100%;max-width:360px;max-height:52vh;object-fit:contain;border-radius:14px;background:#000;transform:scaleX(-1)"></video><button id="cf" class="alt hide" style="max-width:360px">Switch camera (front / back)</button><div class="row"><button id="cc" class="alt">Cancel</button><button id="cs">Capture</button></div></div>
@@ -51,10 +52,10 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
 <!-- AUTH -->
 <section id="auth" class="card">
  <h2 id="at">Log in</h2>
- <div id="regf" class="hide"><label>Full name</label><input id="rn"><label>Position</label><select id="rp"><option value="">Select position</option><option>REGIONAL DIRECTOR</option><option>DEPUTY REGIONAL DIRECTOR</option><option>PRINCIPAL</option><option>HUMAN RESOURCE</option><option>REGIONAL STAFF</option><option>INSTITUTE STAFF</option><option>REPORTING STAFF</option><option>NSS PERSONNEL</option><option>VOLUNTARY STAFF</option></select></div>
+ <div id="instw"><label>Institution</label><select id="ri"></select></div><div id="setf" class="hide"><label>Full name</label><input id="sn2"><label>Setup key</label><input id="sk" autocomplete="off"></div><div id="regf" class="hide"><label>Institution join code</label><input id="rj" autocapitalize="characters" autocomplete="off" placeholder="Ask your institution admin"><label>Full name</label><input id="rn"><label>Position</label><select id="rp"><option value="">Select position</option><option>REGIONAL DIRECTOR</option><option>DEPUTY REGIONAL DIRECTOR</option><option>PRINCIPAL</option><option>HUMAN RESOURCE</option><option>REGIONAL STAFF</option><option>INSTITUTE STAFF</option><option>REPORTING STAFF</option><option>NSS PERSONNEL</option><option>VOLUNTARY STAFF</option></select></div>
  <label>Username</label><input id="un" autocapitalize="none" autocomplete="username">
- <label>Password</label><input id="pw" type="password" autocomplete="current-password">
- <button id="go">Log in</button><button id="sw" class="alt">Create an account</button><div id="am"></div>
+ <label>Password</label><div class="pwf"><input id="pw" type="password" autocomplete="current-password"><button type="button" class="eye" id="eye" aria-label="Show password">👁</button></div>
+ <button id="go">Log in</button><button id="sw" class="alt">Create an account</button><div id="am"></div><p class="mut" style="text-align:center;margin:10px 0 0"><a href="#" id="su">Platform owner setup</a></p>
 </section>
 <!-- APP -->
 <div id="app" class="hide">
@@ -90,7 +91,7 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
  <section id="t-rec" class="hide"><div class="card"><h2>Records</h2>
   <div class="row"><div><label>From</label><input type="date" id="rf"></div><div><label>To</label><input type="date" id="rt"></div></div>
   <div class="chips"><button data-d="0">Today</button><button data-d="6">Last 7 days</button><button data-d="29">Last 30 days</button></div>
-  <label>Search</label><input id="rq" type="search" placeholder="Staff name, position, place, Late, or a date like 2026-10-07"><div id="rc" style="color:var(--mut);font-size:12px;margin-top:6px"></div>
+  <label class="sa hide">Institution</label><select id="rinst" class="sa hide"></select><label>Search</label><input id="rq" type="search" placeholder="Staff name, position, place, Late, or a date like 2026-10-07"><div id="rc" style="color:var(--mut);font-size:12px;margin-top:6px"></div>
   <div class="row" style="margin-top:4px"><div><label>View</label><select id="rv"><option value="sum">Daily summary</option><option value="all">All entries</option><option value="mv">Field movements</option></select></div><div><label>Late after</label><input type="time" id="late" value="08:00"></div></div>
   <div class="row" style="margin-top:12px"><button id="rl">Show</button><button id="rx" class="alt" style="margin-top:0">Export CSV</button></div>
   <button id="sendrep" class="alt hide">Send report to my Senior Supervisor</button>
@@ -100,6 +101,9 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
   <div class="card hide" id="mapcard"><h2 id="maph">Map</h2><iframe id="mapf" title="Map" style="width:100%;height:300px;border:0;border-radius:10px" loading="lazy"></iframe><p><a id="mapg" href="#" target="_blank" rel="noopener">Open in Google Maps</a></p></div></section>
  <section id="t-rep" class="hide"><div class="card"><h2 id="reph">Reports</h2><div class="tbl"><table id="reptab"></table></div></div></section>
  <section id="t-adm" class="hide">
+  <div class="card sa hide"><h2>Institutions</h2><label>Manage institution</label><select id="ainst"></select>
+   <label>New institution name</label><input id="inn"><button id="inadd">Add institution</button><div id="inmsg"></div><div class="tbl" style="margin-top:10px"><table id="intab"></table></div></div>
+  <div class="card adm hide"><h2>Join code</h2><p class="mut">Give this code to staff so they can create accounts under this institution.</p><div id="jc" style="font-size:22px;font-weight:800;letter-spacing:3px"></div><button id="jcn" class="alt">Generate a new code</button></div>
   <div class="card"><h2>Allowed locations</h2>
    <label>Name</label><input id="ln"><div class="row"><div><label>Latitude</label><input id="la" inputmode="decimal"></div><div><label>Longitude</label><input id="lg" inputmode="decimal"></div></div>
    <label>Radius (metres)</label><input id="lr" type="number" value="100">
@@ -128,7 +132,7 @@ const TS=firebase.firestore.FieldValue.serverTimestamp;
 const $=i=>document.getElementById(i),MAXACC=60;
 const DEV=(()=>{try{let d=localStorage.getItem('atds_dev');if(!d){d=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));localStorage.setItem('atds_dev',d)}return d}catch(e){return 'nodev-'+Math.random().toString(36).slice(2)}})();
 let me=null,locs=[],pos=null,near=null,reg=false,geoOk=false,st={in:false,out:false};
-const mail=async u=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(u.trim().toLowerCase()));return [...new Uint8Array(b)].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')+'@atds.local'};
+const mail=async(u,i)=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode((i||'')+':'+u.trim().toLowerCase()));return [...new Uint8Array(b)].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')+'@atds.local'};
 const pass=p=>p+'#atds-2026'; // Firebase needs 6+ chars; this lets people use any password length
 const say=(el,t,c)=>$(el).innerHTML=t?`<div class="msg ${c||''}">${t}</div>`:'';
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -141,27 +145,46 @@ const fmt=t=>t?t.toDate().toLocaleString('en-GB',{timeZone:'Africa/Accra',second
 const day=d=>d.toISOString().slice(0,10);
 
 /* ---------- auth ---------- */
-$('sw').onclick=()=>{reg=!reg;$('regf').classList.toggle('hide',!reg);$('at').textContent=reg?'Create account':'Log in';$('go').textContent=reg?'Create account':'Log in';$('sw').textContent=reg?'I have an account':'Create an account';say('am','')};
+let mode='login',regBusy=false,allInsts=[];
+const isSA=()=>!!me&&me.role==='superadmin',adm=()=>!!me&&['admin','superadmin'].includes(me.role),mi=()=>isSA()?($('ainst').value||null):me.instId,scope=c=>isSA()?c:c.where('instId','==',me.instId);
+async function loadInsts(){let L=[],sv='';try{L=(await db.collection('instPublic').where('active','==',true).get()).docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>x.name.localeCompare(y.name))}catch(e){}
+ try{sv=localStorage.getItem('atds_inst')||''}catch(e){}const k=$('ri').value||sv;
+ $('ri').innerHTML='<option value="">Select institution</option>'+L.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join('')+(mode==='login'?'<option value="@platform">Platform owner (no institution)</option>':'');
+ if([...$('ri').options].some(o=>o.value===k))$('ri').value=k}
+function setMode(m){mode=m;const r=m==='reg',p=m==='setup';$('regf').classList.toggle('hide',!r);$('setf').classList.toggle('hide',!p);$('instw').classList.toggle('hide',p);
+ $('at').textContent=r?'Create account':p?'Platform owner setup':'Log in';$('go').textContent=r?'Create account':p?'Claim platform':'Log in';$('sw').textContent=r?'I have an account':'Create an account';
+ $('pw').autocomplete=m==='login'?'current-password':'new-password';say('am','');loadInsts()}
+$('sw').onclick=()=>setMode(mode==='login'?'reg':'login');$('su').onclick=e=>{e.preventDefault();setMode('setup')};setMode('login');
+$('eye').onclick=()=>{const p=$('pw'),sh=p.type==='password';p.type=sh?'text':'password';$('eye').textContent=sh?'🙈':'👁';$('eye').setAttribute('aria-label',sh?'Hide password':'Show password')};
 $('go').onclick=async()=>{
- const u=$('un').value,p=$('pw').value;if(!u.trim()||!p)return say('am','Enter a username and a password.','bad');const em=await mail(u),pp=pass(p);
- try{if(reg){if(!$('rn').value||!$('rp').value)return say('am','Enter your full name and select a position.','bad');
-   const c=await auth.createUserWithEmailAndPassword(em,pp);
-   await db.collection('users').doc(c.user.uid).set({name:$('rn').value.trim(),position:$('rp').value.trim(),username:u.trim().toLowerCase(),role:'staff',locations:[],active:true,deviceId:DEV,created:TS()});
-  }else await auth.signInWithEmailAndPassword(em,pp);
- }catch(e){say('am',e.code==='auth/email-already-in-use'?'That username is taken.':'Could not log in. Check your username and password.','bad')}};
+ const u=$('un').value,p=$('pw').value,iv=mode==='setup'?'@platform':$('ri').value;
+ if(!iv)return say('am','Select your institution.','bad');
+ if(!u.trim()||!p)return say('am','Enter a username and a password.','bad');
+ if(mode==='reg'&&(!$('rn').value.trim()||!$('rp').value||!$('rj').value.trim()))return say('am','Enter the join code, your full name and select a position.','bad');
+ if(mode==='setup'&&(!$('sn2').value.trim()||!$('sk').value))return say('am','Enter your name and the setup key.','bad');
+ const em=await mail(u,iv),pp=pass(p);try{localStorage.setItem('atds_inst',iv)}catch(e){}
+ if(mode==='login'){try{await auth.signInWithEmailAndPassword(em,pp)}catch(e){say('am','Could not log in. Check your institution, username and password.','bad')}return}
+ regBusy=true;let c;
+ try{c=await auth.createUserWithEmailAndPassword(em,pp)}catch(e){regBusy=false;return say('am',e.code==='auth/email-already-in-use'?'That username is taken in this institution.':'Could not create the account. '+(e.code||''),'bad')}
+ try{const ud=db.collection('users').doc(c.user.uid),un=u.trim().toLowerCase();
+  if(mode==='setup'){const b=db.batch();b.set(db.collection('meta').doc('platform'),{superUid:c.user.uid,setupKey:$('sk').value});b.set(ud,{name:$('sn2').value.trim(),position:'SUPER ADMIN',username:un,role:'superadmin',active:true,deviceId:DEV,created:TS()});await b.commit()}
+  else await ud.set({name:$('rn').value.trim(),position:$('rp').value.trim(),username:un,role:'staff',instId:iv,joinCode:$('rj').value.trim().toUpperCase(),locations:[],active:true,deviceId:DEV,created:TS()})}
+ catch(e){try{await c.user.delete()}catch(x){}regBusy=false;return say('am',mode==='setup'?'Setup was refused. Check the setup key, or the platform may already be claimed.':'The join code is wrong for this institution, or the institution is not active.','bad')}
+ regBusy=false;boot(c.user)};
 $('lo').onclick=async()=>{if(shareOn)await stopShare();stopLive();auth.signOut()};
-auth.onAuthStateChanged(async u=>{
+auth.onAuthStateChanged(u=>{if(regBusy)return;boot(u)});
+async function boot(u){
  if(!u){me=null;$('auth').classList.remove('hide');$('app').classList.add('hide');$('lo').classList.add('hide');return}
  let s;for(let i=0;i<8;i++){s=await db.collection('users').doc(u.uid).get();if(s.exists)break;await new Promise(r=>setTimeout(r,500))}
- me={uid:u.uid,...s.data()};
+ me={uid:u.uid,...s.data()};if(me.instId){try{const i=await db.collection('instPublic').doc(me.instId).get();me.instName=i.exists?i.data().name:''}catch(e){}}
  if(me.deviceId&&me.deviceId!==DEV){await auth.signOut();say('am','This account is registered to another phone. Ask an admin to reset your phone, then log in again.','bad');return}
  if(!me.deviceId){try{await db.collection('users').doc(u.uid).update({deviceId:DEV});me.deviceId=DEV}catch(e){}}
  $('auth').classList.add('hide');$('app').classList.remove('hide');$('lo').classList.remove('hide');
- document.querySelectorAll('.adm').forEach(e=>e.classList.toggle('hide',me.role!=='admin'));
- document.querySelectorAll('.rep').forEach(e=>e.classList.toggle('hide',!['supervisor','super','admin'].includes(me.role)));$('sendrep').classList.toggle('hide',me.role!=='supervisor');
- const canExp=['admin','supervisor','super'].includes(me.role);$('rx').classList.toggle('hide',!canExp);$('rl').parentElement.style.gridTemplateColumns=canExp?'1fr 1fr':'1fr';
- await loadLocs();watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(s.exists?'Role: '+({staff:'Staff',supervisor:'Supervisor',super:'Senior supervisor',admin:'Admin'}[me.role]||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v1.0';
-});
+ document.querySelectorAll('.adm').forEach(e=>e.classList.toggle('hide',!adm()));document.querySelectorAll('.sa').forEach(e=>e.classList.toggle('hide',!isSA()));['me','fld'].forEach(t=>document.querySelectorAll('[data-t="'+t+'"],[data-go="'+t+'"]').forEach(e=>e.classList.toggle('hide',isSA())));
+ document.querySelectorAll('.rep').forEach(e=>e.classList.toggle('hide',!['supervisor','super','admin','superadmin'].includes(me.role)));$('sendrep').classList.toggle('hide',me.role!=='supervisor');
+ const canExp=['admin','supervisor','super','superadmin'].includes(me.role);$('rx').classList.toggle('hide',!canExp);$('rl').parentElement.style.gridTemplateColumns=canExp?'1fr 1fr':'1fr';
+ await loadLocs();if(!isSA())watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(me.instName?me.instName+' · ':'')+(s.exists?'Role: '+({staff:'Staff',supervisor:'Supervisor',super:'Senior supervisor',admin:'Admin',superadmin:'Super admin'}[me.role]||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v1.0';
+}
 
 /* ---------- tabs ---------- */
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
@@ -174,7 +197,7 @@ setInterval(()=>{const n=now();$('clk').textContent=n.toLocaleTimeString('en-GB'
 
 /* ---------- geofence ---------- */
 const dist=(a,b,c,d)=>{const R=6371000,r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
-async function loadLocs(){const s=await db.collection('locations').where('active','==',true).get();locs=s.docs.map(d=>({id:d.id,...d.data()}))}
+async function loadLocs(i){i=i||me.instId;if(!i){locs=[];return}const s=await db.collection('locations').where('active','==',true).where('instId','==',i).get();locs=s.docs.map(d=>({id:d.id,...d.data()}))}
 function allowed(){const a=locs.filter(l=>(me.locations||[]).includes(l.id));return a.length?a:locs} // none assigned = any active location
 function watch(){
  if(!navigator.geolocation)return say('mm','This device cannot share its location.','bad');
@@ -206,16 +229,16 @@ async function mark(type){
  try{photo=await selfie(()=>[now().toLocaleString('en-GB',SF),me.name+' | '+type.toUpperCase()+' | '+near.name])}
  catch(e){setBtns();return say('mm',e.message==='cancel'?'Selfie cancelled. Nothing was saved.':'The camera is needed for the selfie. Allow camera access for this app and try again.','bad')}
  const t=now(),id=me.uid+'_'+day(t)+'_'+type,pid=id+'_'+Date.now();let step='selfie photo';
- try{await db.collection('photos').doc(pid).set({uid:me.uid,data:photo,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});
+ try{await db.collection('photos').doc(pid).set({uid:me.uid,data:photo,instId:me.instId||null,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()});
   step='attendance record';
-  await db.collection('attendance').doc(id).set({uid:me.uid,name:me.name,position:me.position,type,locationId:near.id,locationName:near.name,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,photoId:pid,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
+  await db.collection('attendance').doc(id).set({uid:me.uid,name:me.name,position:me.position,type,locationId:near.id,locationName:near.name,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,photoId:pid,instId:me.instId||null,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
   st[type]=true;saveSt();setBtns();today()}catch(e){say('mm','Could not save the '+step+'. '+why(e)+(e&&e.code==='permission-denied'?' (If you already signed '+type+' today, this is expected.)':''),'bad');today()}}
 $('bin').onclick=()=>mark('in');$('bout').onclick=()=>mark('out');
 
 /* ---------- records ---------- */
 async function q(from,to,mine,col){
  const c=db.collection(col||'attendance');let docs=[];
- if(me.role==='admin'&&!mine)docs=(await c.where('date','>=',from).where('date','<=',to).get()).docs;
+ if(adm()&&!mine)docs=(isSA()?await c.where('date','>=',from).where('date','<=',to).get():await scope(c).get()).docs;
  else{const qs=[c.where('uid','==',me.uid)];
   if(!mine&&me.role==='supervisor')qs.push(c.where('supervisorId','==',me.uid));
   if(!mine&&me.role==='super')qs.push(c.where('supervisorId','==',me.uid),c.where('superId','==',me.uid));
@@ -278,21 +301,35 @@ function render(){
  }else{
   csvD={head:['Name','Position','Type','Time','Location','Lat','Lng','Accuracy(m)'],rows:lf.map(r=>[r.name,r.position,r.type,fmt(r.at),r.locationName,r.lat,r.lng,r.accuracy])};
   $('rtab').innerHTML='<tr><th>Staff</th><th>Type</th><th>Time</th><th>Place</th></tr>'+(lf.map(r=>`<tr><td>${esc(r.name)}<br><small>${esc(r.position)}</small></td><td>${r.type}</td><td>${fmt(r.at)}${ph(r)}</td><td>${esc(r.locationName)}</td></tr>`).join('')||'<tr><td colspan=4>No records match.</td></tr>')}}
-$('rl').onclick=async()=>{const f=$('rf').value||day(now()),t=$('rt').value||f;$('rtab').dataset.ran=1;try{[last,lastM]=await Promise.all([q(f,t),qm(f,t)]);render()}catch(e){$('rtab').innerHTML='<tr><td>Could not load records. Check your connection.</td></tr>'}};
+$('rl').onclick=async()=>{const f=$('rf').value||day(now()),t=$('rt').value||f;$('rtab').dataset.ran=1;try{[last,lastM]=await Promise.all([q(f,t),qm(f,t)]);if(isSA()&&$('rinst').value){const k=$('rinst').value;last=last.filter(x=>x.instId===k);lastM=lastM.filter(x=>x.instId===k)}render()}catch(e){$('rtab').innerHTML='<tr><td>Could not load records. Check your connection.</td></tr>'}};
 $('rv').onchange=render;$('rq').oninput=render;
 document.querySelectorAll('.chips button').forEach(c=>c.onclick=()=>{$('rt').value=day(now());$('rf').value=day(new Date(now()-(+c.dataset.d)*864e5));$('rl').onclick()});
-$('rx').onclick=()=>{if(!me||!['admin','supervisor','super'].includes(me.role)||!csvD.rows.length)return;const c=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+$('rx').onclick=()=>{if(!me||!['admin','supervisor','super','superadmin'].includes(me.role)||!csvD.rows.length)return;const c=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  const t=[csvD.head.map(c).join(','),...csvD.rows.map(r=>r.map(c).join(','))].join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='attendance-'+$('rv').value+'.csv';a.click()};
 
 /* ---------- admin ---------- */
 $('lu').onclick=()=>pos?($('la').value=pos.latitude.toFixed(6),$('lg').value=pos.longitude.toFixed(6)):alert('Waiting for GPS.');
 $('ls').onclick=async()=>{const n=$('ln').value.trim(),a=+$('la').value,g=+$('lg').value,r=+$('lr').value;if(!n||!a||!g||r<10)return alert('Enter a name, coordinates and a radius of at least 10 m.');
- await db.collection('locations').add({name:n,lat:a,lng:g,radius:r,active:true});['ln','la','lg'].forEach(i=>$(i).value='');await loadLocs();admin()};
+ if(!mi())return alert('Choose an institution first.');await db.collection('locations').add({name:n,lat:a,lng:g,radius:r,active:true,instId:mi()});['ln','la','lg'].forEach(i=>$(i).value='');await loadLocs(mi());admin()};
+let ainstBusy=0;
+const gen=()=>{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789',a=new Uint8Array(8);crypto.getRandomValues(a);return[...a].map(x=>A[x%A.length]).join('')};
+async function loadAllInsts(){const s=await db.collection('institutions').get();allInsts=s.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>x.name.localeCompare(y.name));
+ const o=allInsts.map(i=>`<option value="${i.id}">${esc(i.name)}${i.active?'':' (inactive)'}</option>`).join(''),k=$('ainst').value,r=$('rinst').value;
+ $('ainst').innerHTML='<option value="">Choose an institution…</option>'+o;$('ainst').value=k;$('rinst').innerHTML='<option value="">All institutions</option>'+o;$('rinst').value=r;
+ $('intab').innerHTML='<tr><th>Institution</th><th>Code</th><th></th></tr>'+allInsts.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.code)}</td><td><a href="#" data-ia="${i.id}">${i.active?'Deactivate':'Activate'}</a></td></tr>`).join('');
+ $('intab').querySelectorAll('[data-ia]').forEach(a=>a.onclick=async e=>{e.preventDefault();const i=allInsts.find(x=>x.id===a.dataset.ia),v=!i.active,b=db.batch();b.update(db.collection('institutions').doc(i.id),{active:v});b.update(db.collection('instPublic').doc(i.id),{active:v});await b.commit();admin()})}
+$('inadd').onclick=async()=>{const n=$('inn').value.trim();if(!n)return say('inmsg','Enter the institution name.','bad');
+ try{const r=db.collection('institutions').doc(),b=db.batch();b.set(r,{name:n,code:gen(),active:true,created:TS()});b.set(db.collection('instPublic').doc(r.id),{name:n,active:true});await b.commit();$('inn').value='';say('inmsg','Institution added.','good');admin()}catch(e){say('inmsg','Could not add. '+why(e),'bad')}};
+$('ainst').onchange=()=>admin();$('rinst').onchange=()=>$('rl').onclick();
+$('jcn').onclick=async()=>{const i=mi();if(!i)return;if(!confirm('Generate a new join code? The old code will stop working.'))return;try{await db.collection('institutions').doc(i).update({code:gen()});admin()}catch(e){alert('Could not change the code. '+why(e))}};
 async function admin(){
+ if(isSA())await loadAllInsts();const i0=mi();
+ if(!i0){['ltab','stab','tree','tlist','tslist','tsup','tsuper','mvA','mvB'].forEach(x=>$(x).innerHTML='');$('jc').textContent='';return}
+ await loadLocs(i0);try{const ci=isSA()?allInsts.find(x=>x.id===i0):(await db.collection('institutions').doc(i0).get()).data();$('jc').textContent=ci&&ci.code||''}catch(e){}
  $('ltab').innerHTML='<tr><th>Location</th><th>Radius</th><th></th></tr>'+locs.map(l=>`<tr><td>${esc(l.name)}</td><td>${l.radius} m</td><td><a href="#" data-d="${l.id}">Remove</a></td></tr>`).join('');
- $('ltab').querySelectorAll('[data-d]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(confirm('Remove this location?')){await db.collection('locations').doc(a.dataset.d).update({active:false});await loadLocs();admin()}});
- const s=await db.collection('users').get(),U={};s.docs.forEach(d=>{U[d.id]=d.data()});teamsUI(U);const opts=(role,cur)=>'<option value="">None</option>'+s.docs.filter(d=>d.data().role===role).map(d=>`<option value="${d.id}"${cur===d.id?' selected':''}>${esc(d.data().name)}</option>`).join('');
+ $('ltab').querySelectorAll('[data-d]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(confirm('Remove this location?')){await db.collection('locations').doc(a.dataset.d).update({active:false});await loadLocs(mi());admin()}});
+ const s=await db.collection('users').where('instId','==',i0).get(),U={};s.docs.forEach(d=>{U[d.id]=d.data()});teamsUI(U);const opts=(role,cur)=>'<option value="">None</option>'+s.docs.filter(d=>d.data().role===role).map(d=>`<option value="${d.id}"${cur===d.id?' selected':''}>${esc(d.data().name)}</option>`).join('');
  $('stab').innerHTML='<tr><th>Staff</th><th>Role</th><th>Supervisor / reports to</th><th>Locations (none = all)</th><th>Phone</th></tr>'+s.docs.map(d=>{const u=d.data();return`<tr><td>${esc(u.name)}<br><small>${esc(u.position)}</small></td>
  <td><select data-r="${d.id}"><option${u.role==='staff'?' selected':''}>staff</option><option${u.role==='supervisor'?' selected':''}>supervisor</option><option value="super"${u.role==='super'?' selected':''}>senior supervisor</option><option${u.role==='admin'?' selected':''}>admin</option></select></td>
  <td>${u.role==='staff'?`<select data-s="${d.id}">${opts('supervisor',u.supervisorId)}</select>`:u.role==='supervisor'?`<select data-s="${d.id}">${opts('super',u.supervisorId)}</select>`:'–'}</td>
@@ -309,7 +346,7 @@ document.addEventListener('click',async e=>{const a=e.target.closest&&e.target.c
  $('pvi').removeAttribute('src');$('pvi').hidden=true;$('pvm').textContent='Loading…';$('pv').classList.remove('hide');
  try{const d=await db.collection('photos').doc(a.dataset.p).get();if(d.exists){$('pvi').src=d.data().data;$('pvi').hidden=false;$('pvm').textContent=''}else $('pvm').textContent='No photo was saved for this record.'}catch(x){$('pvm').textContent='Could not load the selfie.'}});
 $('pvc').onclick=()=>$('pv').classList.add('hide');
-setInterval(async()=>{if(!me)return;try{await loadLocs();const u=await db.collection('users').doc(me.uid).get();if(u.exists){me.locations=u.data().locations||[];me.role=u.data().role||me.role;me.supervisorId=u.data().supervisorId||null;me.superId=u.data().superId||null}if(pos)check()}catch(e){}},60000);
+setInterval(async()=>{if(!me||isSA())return;try{await loadLocs();const u=await db.collection('users').doc(me.uid).get();if(u.exists){me.locations=u.data().locations||[];me.role=u.data().role||me.role;me.supervisorId=u.data().supervisorId||null;me.superId=u.data().superId||null}if(pos)check()}catch(e){}},60000);
 /* ---------- field movement + home ---------- */
 const NL=String.fromCharCode(10);let fphoto=null,flast=null,fcfg={},fToday=0;
 try{fcfg=JSON.parse(localStorage.getItem('fr_cfg')||'{}')}catch(e){}
@@ -322,9 +359,9 @@ $('fup').onchange=function(){const f=this.files[0];if(!f)return;const im=new Ima
  im.onload=()=>{const k=Math.min(1,800/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);fset(c.toDataURL('image/jpeg',.6));URL.revokeObjectURL(u)};
  im.onerror=()=>say('ferr','Could not load that photo.','bad');im.src=u};
 $('fsave').onclick=async()=>{if(!pos)return;$('fsave').disabled=true;
- const id=me.uid+'_m'+Date.now(),t=now(),rec={uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),note:$('fnote').value.trim().slice(0,400),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()};
+ const id=me.uid+'_m'+Date.now(),t=now(),rec={uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),note:$('fnote').value.trim().slice(0,400),date:day(t),y:t.getUTCFullYear(),m:t.getUTCMonth()+1,d:t.getUTCDate(),deviceId:DEV,instId:me.instId||null,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()};
  const w=(n,pr)=>pr.catch(e=>{e.step=n;throw e});let p1=Promise.resolve();
- if(fphoto){p1=w('photo',db.collection('photos').doc(id).set({uid:me.uid,data:fphoto,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()}));rec.photoId=id}
+ if(fphoto){p1=w('photo',db.collection('photos').doc(id).set({uid:me.uid,data:fphoto,instId:me.instId||null,supervisorId:me.supervisorId||null,superId:me.superId||null,created:TS()}));rec.photoId=id}
  const p2=w('field record',db.collection('movements').doc(id).set(rec));
  try{await Promise.race([Promise.all([p1,p2]),new Promise((_,r)=>setTimeout(()=>r(new Error('slow')),9000))]);say('fm','Record saved.','good')}
  catch(e){if(e.message!=='slow'){say('fm','Could not save the '+(e.step||'record')+'. '+why(e),'bad');fshow();return}say('fm','Saved on this phone. It will upload when you are back online.','good')}
@@ -353,10 +390,10 @@ $('sendrep').onclick=async()=>{
  if(!staff.length)return alert('There are no records from your staff in this period.');
  if(!confirm('Send this report for '+f+' to '+t+' to your Senior Supervisor?'))return;
  const note=(prompt('Add a short note for your Senior Supervisor (optional)')||'').slice(0,300);
- try{await db.collection('reports').add({fromUid:me.uid,fromName:me.name,toUid:me.supervisorId,from:f,to:t,lateAfter:$('late').value,staff,note,read:false,at:TS()});alert('Report sent.')}catch(e){alert('Could not send the report. Try again.')}};
+ try{await db.collection('reports').add({instId:me.instId||null,fromUid:me.uid,fromName:me.name,toUid:me.supervisorId,from:f,to:t,lateAfter:$('late').value,staff,note,read:false,at:TS()});alert('Report sent.')}catch(e){alert('Could not send the report. Try again.')}};
 async function loadReports(){
  const c=db.collection('reports');let sn;
- if(me.role==='admin')sn=await c.get();else if(me.role==='super')sn=await c.where('toUid','==',me.uid).get();else sn=await c.where('fromUid','==',me.uid).get();
+ if(isSA())sn=await c.get();else if(me.role==='admin')sn=await scope(c).get();else if(me.role==='super')sn=await c.where('toUid','==',me.uid).get();else sn=await c.where('fromUid','==',me.uid).get();
  const rows=sn.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>sec(b)-sec(a));
  $('reph').textContent=me.role==='supervisor'?'Reports I have sent':'Reports received';
  $('reptab').innerHTML='<tr><th>Sent</th><th>From</th><th>Period</th><th></th></tr>'+(rows.map(r=>`<tr><td>${fmt(r.at)}</td><td>${esc(r.fromName)}</td><td>${esc(r.from)} to ${esc(r.to)}</td><td><a href="#" data-r="${r.id}">${me.uid===r.toUid&&!r.read?'<b>Open (new)</b>':'Open'}</a></td></tr>`).join('')||'<tr><td colspan=4>No reports yet.</td></tr>');
@@ -373,7 +410,7 @@ let shareOn=false,lastShare=0,lastSent=null,wl=null,liveUn=[],liveRows={};
 async function pushLive(force){
  if(!shareOn||!pos)return;const n=Date.now(),moved=lastSent?dist(lastSent.a,lastSent.b,pos.latitude,pos.longitude):999;
  if(!force&&(n-lastShare<30000||(moved<15&&n-lastShare<120000)))return;lastShare=n;
- try{await db.collection('live').doc(me.uid).set({uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
+ try{await db.collection('live').doc(me.uid).set({uid:me.uid,name:me.name,position:me.position,lat:pos.latitude,lng:pos.longitude,accuracy:Math.round(pos.accuracy),instId:me.instId||null,supervisorId:me.supervisorId||null,superId:me.superId||null,at:TS()});
   lastSent={a:pos.latitude,b:pos.longitude};$('lst').textContent='Sharing live. Last sent '+now().toLocaleTimeString('en-GB',{timeZone:'Africa/Accra',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true})}
  catch(e){$('lst').textContent='Could not send your location. '+why(e)}}
 function setShareUI(){$('lbtn').textContent=shareOn?'Stop sharing':'Share my live location with my supervisor';$('lbtn').className=shareOn?'':'alt';if(!shareOn)$('lst').textContent=''}
@@ -386,7 +423,7 @@ $('lbtn').onclick=async()=>{
  shareOn=true;lastShare=0;setShareUI();await pushLive(true);try{wl=await navigator.wakeLock.request('screen')}catch(e){}};
 document.addEventListener('visibilitychange',async()=>{if(shareOn&&document.visibilityState==='visible'){try{wl=await navigator.wakeLock.request('screen')}catch(e){}pushLive(true)}});
 function startLive(){stopLive();if(!me)return;const c=db.collection('live');
- const qs=me.role==='admin'?[c]:me.role==='super'?[c.where('superId','==',me.uid),c.where('supervisorId','==',me.uid)]:[c.where('supervisorId','==',me.uid)];
+ const qs=adm()?[scope(c)]:me.role==='super'?[c.where('superId','==',me.uid),c.where('supervisorId','==',me.uid)]:[c.where('supervisorId','==',me.uid)];
  qs.forEach((q,i)=>{liveUn.push(q.onSnapshot(sn=>{liveRows[i]=sn.docs.map(d=>({id:d.id,...d.data()}));renderLive()},e=>{$('livenote').textContent='Could not load live locations. '+why(e)}))})}
 function stopLive(){liveUn.forEach(f=>f());liveUn=[];liveRows={}}
 const ago=x=>x<60?'just now':x<3600?Math.floor(x/60)+' min ago':Math.floor(x/3600)+' h ago';

@@ -93,6 +93,7 @@ input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#e
   <div class="chips"><button data-d="0">Today</button><button data-d="6">Last 7 days</button><button data-d="29">Last 30 days</button></div>
   <label class="sa hide">Institution</label><select id="rinst" class="sa hide"></select><label>Search</label><input id="rq" type="search" placeholder="Staff name, position, place, Late, or a date like 2026-10-07"><div id="rc" style="color:var(--mut);font-size:12px;margin-top:6px"></div>
   <div class="row" style="margin-top:4px"><div><label>View</label><select id="rv"><option value="sum">Daily summary</option><option value="all">All entries</option><option value="mv">Field movements</option></select></div><div><label>Late after</label><input type="time" id="late" value="08:00"></div></div>
+  <label class="chk adm hide"><input type="checkbox" id="wkd" checked><span>Absent view: skip Saturdays and Sundays</span></label>
   <div class="row" style="margin-top:12px"><button id="rl">Show</button><button id="rx" class="alt" style="margin-top:0">Export CSV</button></div>
   <button id="sendrep" class="alt hide">Send report to my Senior Supervisor</button>
   <div class="tbl" style="margin-top:10px"><table id="rtab"></table></div>
@@ -183,7 +184,7 @@ async function boot(u){
  document.querySelectorAll('.adm').forEach(e=>e.classList.toggle('hide',!adm()));document.querySelectorAll('.sa').forEach(e=>e.classList.toggle('hide',!isSA()));['me','fld'].forEach(t=>document.querySelectorAll('[data-t="'+t+'"],[data-go="'+t+'"]').forEach(e=>e.classList.toggle('hide',isSA())));
  document.querySelectorAll('.rep').forEach(e=>e.classList.toggle('hide',!['supervisor','super','admin','superadmin'].includes(me.role)));$('sendrep').classList.toggle('hide',me.role!=='supervisor');
  const canExp=['admin','supervisor','super','superadmin'].includes(me.role);$('rx').classList.toggle('hide',!canExp);$('rl').parentElement.style.gridTemplateColumns=canExp?'1fr 1fr':'1fr';
- await loadLocs();if(!isSA())watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(me.instName?me.instName+' · ':'')+(s.exists?'Role: '+({staff:'Staff',supervisor:'Supervisor',super:'Senior supervisor',admin:'Admin',superadmin:'Super admin'}[me.role]||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v1.0';
+ if(adm()&&![...$('rv').options].some(o=>o.value==='abs'))$('rv').add(new Option('Absent staff','abs'));await loadLocs();if(!isSA())watch();today();fcount();$('hi').textContent='Welcome, '+(me.name||'');$('who').textContent=(me.instName?me.instName+' · ':'')+(s.exists?'Role: '+({staff:'Staff',supervisor:'Supervisor',super:'Senior supervisor',admin:'Admin',superadmin:'Super admin'}[me.role]||'none')+' · Phone: '+(me.deviceId?'registered':'not registered')+' · Locations: '+((me.locations||[]).length||'any'):'PROFILE NOT FOUND: register again or ask the admin')+' · v1.0';
 }
 
 /* ---------- tabs ---------- */
@@ -260,7 +261,7 @@ async function today(){const d=day(now()),from=day(new Date(now()-histDays*864e5
  $('today').innerHTML='<tr><th>Date</th><th>In</th><th>Out</th><th>Hours</th></tr>'+(sm.map(x=>`<tr><td>${esc(x.date)}</td><td>${tm(x.fi)}${ph(x.fi)}</td><td>${tm(x.lo)}${ph(x.lo)}</td><td>${hrs(x.mins)}</td></tr>`).join('')||'<tr><td colspan=4>No attendance records yet.</td></tr>');
  homeStat();$('more').textContent='Show earlier days (now showing the last '+histDays+' days)'}
 $('more').onclick=()=>{histDays+=30;today()};
-let last=[],lastM=[],csvD={head:[],rows:[]};
+let last=[],lastM=[],lastU=[],csvD={head:[],rows:[]};
 const ph=r=>r&&(r.photoId||r.id)?`<a href="#" class="ph" data-p="${r.photoId||r.id}" aria-label="View photo">📷</a>`:'';
 const sec=r=>r&&r.at?r.at.seconds:0;
 const tm=r=>r&&r.at?r.at.toDate().toLocaleTimeString('en-GB',{timeZone:'Africa/Accra',hour:'2-digit',minute:'2-digit',hour12:true}):'–';
@@ -279,8 +280,22 @@ function summarise(rows,late){
   return{uid:a[0].uid,date:a[0].date,name:a[0].name,position:a[0].position,fi,lo,mins,st,loc:(fi||a[0]).locationName}})
  .sort((x,y)=>y.date.localeCompare(x.date)||String(x.name).localeCompare(String(y.name)))}
 function counts(r){const g={};r.forEach(x=>{const o=g[x.uid]=g[x.uid]||{uid:x.uid,name:x.name,position:x.position,d:0,l:0,m:0};if(x.fi)o.d++;if(x.st.startsWith('Late'))o.l++;o.m+=x.mins||0});return Object.values(g).sort((a,b)=>String(a.name).localeCompare(String(b.name)))}
+function renderAbs(){
+ const f=$('rf').value,t=$('rt').value||f,skip=$('wkd').checked,P={};
+ last.forEach(r=>{if(r.type==='in')(P[r.date]=P[r.date]||new Set()).add(r.uid)});
+ const w=($('rq').value||'').toLowerCase().split(/\s+/).filter(Boolean),R=lastU.filter(u=>u.active!==false&&w.every(k=>(u.name+' '+u.position).toLowerCase().includes(k)));
+ const rows=[],cnt={};let nd=0;
+ for(let d=new Date(f+'T00:00:00Z');day(d)<=t;d=new Date(d.getTime()+864e5)){const k=day(d),wd=d.getUTCDay();
+  if((skip&&(wd===0||wd===6))||!P[k])continue; // a day when nobody signed in is treated as a holiday or no-data day
+  nd++;R.forEach(u=>{if(P[k].has(u.uid)||(u.created&&u.created.toDate&&day(u.created.toDate())>k))return;rows.push({date:k,name:u.name,position:u.position});cnt[u.uid]=cnt[u.uid]||{name:u.name,position:u.position,n:0};cnt[u.uid].n++})}
+ rows.sort((a,b)=>b.date.localeCompare(a.date)||String(a.name).localeCompare(String(b.name)));
+ $('rc').textContent=rows.length+' absence(s) over '+nd+' working day(s) with sign-ins. Days when nobody signed in are skipped.'+(t>=day(now())?' Today is included, so some may still sign in.':'');
+ csvD={head:['Date','Name','Position'],rows:rows.map(x=>[x.date,x.name,x.position])};
+ $('rtab').innerHTML='<tr><th>Date</th><th>Absent staff</th></tr>'+(rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.name)}<br><small>${esc(x.position)}</small></td></tr>`).join('')||'<tr><td colspan=2>No absences in this period.</td></tr>');
+ $('ctab').innerHTML='<tr><th>Staff</th><th>Days absent</th></tr>'+Object.values(cnt).sort((a,b)=>b.n-a.n).map(o=>`<tr><td>${esc(o.name)}<br><small>${esc(o.position)}</small></td><td>${o.n}</td></tr>`).join('')}
 function render(){
  if(!last.length&&!lastM.length&&!$('rtab').dataset.ran)return;
+ if($('rv').value==='abs')return renderAbs();
  if($('rv').value==='mv'){
   const w=($('rq').value||'').toLowerCase().split(/\s+/).filter(Boolean),m=lastM.filter(x=>{const h=[x.date,x.name,x.position,x.note].join(' ').toLowerCase();return w.every(k=>h.includes(k))}),by={};
   $('rc').textContent=m.length+' field record(s) found';
@@ -301,8 +316,10 @@ function render(){
  }else{
   csvD={head:['Name','Position','Type','Time','Location','Lat','Lng','Accuracy(m)'],rows:lf.map(r=>[r.name,r.position,r.type,fmt(r.at),r.locationName,r.lat,r.lng,r.accuracy])};
   $('rtab').innerHTML='<tr><th>Staff</th><th>Type</th><th>Time</th><th>Place</th></tr>'+(lf.map(r=>`<tr><td>${esc(r.name)}<br><small>${esc(r.position)}</small></td><td>${r.type}</td><td>${fmt(r.at)}${ph(r)}</td><td>${esc(r.locationName)}</td></tr>`).join('')||'<tr><td colspan=4>No records match.</td></tr>')}}
-$('rl').onclick=async()=>{const f=$('rf').value||day(now()),t=$('rt').value||f;$('rtab').dataset.ran=1;try{[last,lastM]=await Promise.all([q(f,t),qm(f,t)]);if(isSA()&&$('rinst').value){const k=$('rinst').value;last=last.filter(x=>x.instId===k);lastM=lastM.filter(x=>x.instId===k)}render()}catch(e){$('rtab').innerHTML='<tr><td>Could not load records. Check your connection.</td></tr>'}};
-$('rv').onchange=render;$('rq').oninput=render;
+$('rl').onclick=async()=>{const f=$('rf').value||day(now()),t=$('rt').value||f;$('rtab').dataset.ran=1;try{[last,lastM]=await Promise.all([q(f,t),qm(f,t)]);
+ if($('rv').value==='abs'){const ii=isSA()?$('rinst').value:me.instId;if(!ii){lastU=[];$('rtab').innerHTML='<tr><td>Choose an institution above first.</td></tr>';return}lastU=(await db.collection('users').where('instId','==',ii).get()).docs.map(d=>({uid:d.id,...d.data()})).filter(u=>['staff','supervisor','super'].includes(u.role))}
+ if(isSA()&&$('rinst').value){const k=$('rinst').value;last=last.filter(x=>x.instId===k);lastM=lastM.filter(x=>x.instId===k)}render()}catch(e){$('rtab').innerHTML='<tr><td>Could not load records. Check your connection.</td></tr>'}};
+$('rv').onchange=()=>{if($('rv').value==='abs'&&!lastU.length)$('rl').onclick();else render()};$('rq').oninput=render;
 document.querySelectorAll('.chips button').forEach(c=>c.onclick=()=>{$('rt').value=day(now());$('rf').value=day(new Date(now()-(+c.dataset.d)*864e5));$('rl').onclick()});
 $('rx').onclick=()=>{if(!me||!['admin','supervisor','super','superadmin'].includes(me.role)||!csvD.rows.length)return;const c=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  const t=[csvD.head.map(c).join(','),...csvD.rows.map(r=>r.map(c).join(','))].join('\n');

@@ -186,6 +186,7 @@ auth.onAuthStateChanged(u=>{if(regBusy)return;boot(u)});
 async function boot(u){
  if(!u){me=null;$('auth').classList.remove('hide');$('app').classList.add('hide');$('lo').classList.add('hide');return}
  let s;for(let i=0;i<8;i++){s=await db.collection('users').doc(u.uid).get();if(s.exists)break;await new Promise(r=>setTimeout(r,500))}
+ if(!s.exists){await auth.signOut();say('am','This account has been removed or was never set up. Ask your admin.','bad');return}
  me={uid:u.uid,...s.data()};if(me.instId){try{const i=await db.collection('instPublic').doc(me.instId).get();me.instName=i.exists?i.data().name:''}catch(e){}}
  if(s.exists&&!me.instId&&me.role!=='superadmin'){await auth.signOut();say('am','Your account has not been assigned to an institution yet. Ask the platform owner to run the data migration.','bad');return}
  if(me.deviceId&&me.deviceId!==DEV){await auth.signOut();say('am','This account is registered to another phone. Ask an admin to reset your phone, then log in again.','bad');return}
@@ -385,16 +386,22 @@ async function admin(){
  $('ltab').innerHTML='<tr><th>Location</th><th>Radius</th><th></th></tr>'+locs.map(l=>`<tr><td>${esc(l.name)}</td><td>${l.radius} m</td><td><a href="#" data-d="${l.id}">Remove</a></td></tr>`).join('');
  $('ltab').querySelectorAll('[data-d]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(confirm('Remove this location?')){await db.collection('locations').doc(a.dataset.d).update({active:false});await loadLocs(mi());admin()}});
  const s=await db.collection('users').where('instId','==',i0).get(),U={};s.docs.forEach(d=>{U[d.id]=d.data()});teamsUI(U);const opts=(role,cur)=>'<option value="">None</option>'+s.docs.filter(d=>d.data().role===role).map(d=>`<option value="${d.id}"${cur===d.id?' selected':''}>${esc(d.data().name)}</option>`).join('');
- $('stab').innerHTML='<tr><th>Staff</th><th>Role</th><th>Supervisor / reports to</th><th>Locations (none = all)</th><th>Phone</th></tr>'+s.docs.map(d=>{const u=d.data();return`<tr><td>${esc(u.name)}<br><small>${esc(u.position)}</small></td>
+ $('stab').innerHTML='<tr><th>Staff</th><th>Role</th><th>Supervisor / reports to</th><th>Locations (none = all)</th><th>Phone</th><th></th></tr>'+s.docs.map(d=>{const u=d.data();return`<tr><td>${esc(u.name)}<br><small>${esc(u.position)}</small></td>
  <td><select data-r="${d.id}"><option${u.role==='staff'?' selected':''}>staff</option><option${u.role==='supervisor'?' selected':''}>supervisor</option><option value="super"${u.role==='super'?' selected':''}>senior supervisor</option><option${u.role==='admin'?' selected':''}>admin</option></select></td>
  <td>${u.role==='staff'?`<select data-s="${d.id}">${opts('supervisor',u.supervisorId)}</select>`:u.role==='supervisor'?`<select data-s="${d.id}">${opts('super',u.supervisorId)}</select>`:'–'}</td>
  <td><select multiple data-l="${d.id}" size="3">${locs.map(l=>`<option value="${l.id}"${(u.locations||[]).includes(l.id)?' selected':''}>${esc(l.name)}</option>`).join('')}</select></td>
- <td>${u.deviceId?`<a href="#" data-x="${d.id}">Reset</a>`:'Not set'}</td></tr>`}).join('');
+ <td>${u.deviceId?`<a href="#" data-x="${d.id}">Reset</a>`:'Not set'}</td><td>${(u.role!=='admin'||isSA())?`<a href="#" data-del="${d.id}">Delete</a>`:''}</td></tr>`}).join('');
  $('stab').querySelectorAll('[data-s]').forEach(x=>{x.onchange=async()=>{const id=x.dataset.s,v=x.value||null,u=U[id];
   if(u.role==='staff'){await db.collection('users').doc(id).update({supervisorId:v,superId:v&&U[v]?U[v].supervisorId||null:null})}
   else{const b=db.batch();b.update(db.collection('users').doc(id),{supervisorId:v});Object.keys(U).filter(k=>U[k].role==='staff'&&U[k].supervisorId===id).forEach(k=>b.update(db.collection('users').doc(k),{superId:v}));await b.commit()}
   admin()}});
  $('stab').querySelectorAll('[data-x]').forEach(a=>a.onclick=async e=>{e.preventDefault();if(confirm('Reset this staff member\'s phone? They can then log in from a new phone.')){await db.collection('users').doc(a.dataset.x).update({deviceId:firebase.firestore.FieldValue.delete()});admin()}});
+ $('stab').querySelectorAll('[data-del]').forEach(a=>a.onclick=async e=>{e.preventDefault();const id=a.dataset.del,u=U[id];
+  if(!confirm('Delete '+u.name+'? They will no longer be able to use the app. Their past attendance records are kept. This cannot be undone.'))return;
+  try{const b=db.batch();b.delete(db.collection('users').doc(id));
+   Object.keys(U).forEach(k=>{const x=U[k];if(x.supervisorId===id)b.update(db.collection('users').doc(k),x.role==='staff'?{supervisorId:null,superId:null}:{supervisorId:null});else if(x.role==='staff'&&x.superId===id)b.update(db.collection('users').doc(k),{superId:null})});
+   await b.commit();try{await db.collection('live').doc(id).delete()}catch(x){}admin()}
+  catch(x){alert('Could not delete. '+why(x))}});
  $('stab').querySelectorAll('[data-r]').forEach(x=>x.onchange=()=>db.collection('users').doc(x.dataset.r).update({role:x.value}).then(()=>admin()));
  $('stab').querySelectorAll('[data-l]').forEach(x=>x.onchange=()=>db.collection('users').doc(x.dataset.l).update({locations:[...x.selectedOptions].map(o=>o.value)}))}
 document.addEventListener('click',async e=>{const a=e.target.closest&&e.target.closest('[data-p]');if(!a)return;e.preventDefault();
